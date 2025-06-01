@@ -1,0 +1,103 @@
+// 1. Limpiar la base de datos existente
+MATCH (n)
+DETACH DELETE n;
+
+// 2. Crear constraints
+CREATE CONSTRAINT user_id IF NOT EXISTS 
+FOR (u:User) REQUIRE u.id IS UNIQUE;
+
+CREATE CONSTRAINT moto_id IF NOT EXISTS 
+FOR (m:Moto) REQUIRE m.id IS UNIQUE;
+
+CREATE CONSTRAINT marca_nombre IF NOT EXISTS 
+FOR (m:Marca) REQUIRE m.nombre IS UNIQUE;
+
+CREATE CONSTRAINT estilo_nombre IF NOT EXISTS 
+FOR (e:Estilo) REQUIRE e.nombre IS UNIQUE;
+
+// 3. Crear usuarios de prueba
+CREATE (u1:User {
+    id: "user1",
+    username: "admin",
+    edad: 35,
+    experiencia: "Intermedio",
+    uso_previsto: "Paseo",
+    presupuesto: 8000
+});
+
+CREATE (u2:User {
+    id: "user2",
+    username: "maria",
+    edad: 28,
+    experiencia: "Principiante",
+    uso_previsto: "Ciudad",
+    presupuesto: 5000
+});
+
+CREATE (u3:User {
+    id: "user3",
+    username: "pedro",
+    edad: 42,
+    experiencia: "Avanzado",
+    uso_previsto: "Deportivo",
+    presupuesto: 12000
+});
+
+// 4. Cargar motos desde CSV
+LOAD CSV WITH HEADERS FROM 'file:///motos_procesadas_final.csv' AS row
+CREATE (m:Moto {
+    id: apoc.create.uuid(),
+    marca: row.Marca,
+    modelo: row.Modelo,
+    anio: CASE WHEN row.Año = 'N.D.' THEN null ELSE toFloat(row.Año) END,
+    precio: CASE WHEN row.Precio = 'N.D.' THEN null ELSE toFloat(row.Precio) END,
+    tipo: row.Tipo,
+    cilindrada: CASE WHEN row.Cilindrada = 'N.D.' THEN null ELSE toFloat(row.Cilindrada) END,
+    potencia: CASE WHEN row.Potencia = 'N.D.' THEN null ELSE toFloat(row.Potencia) END,
+    torque: CASE WHEN row.Torque IN ['nan', 'N.D.'] THEN null ELSE toFloat(row.Torque) END,
+    peso: CASE WHEN row.Peso = 'N.D.' THEN null ELSE toInteger(row.Peso) END,
+    imagen: row.Imagen,
+    url: row.URL
+});
+
+// 5. Crear relaciones de marca y tipo
+MATCH (m:Moto)
+MERGE (b:Marca {nombre: m.marca})
+MERGE (m)-[:FABRICADA_POR]->(b);
+
+MATCH (m:Moto)
+MERGE (t:Tipo {nombre: m.tipo})
+MERGE (m)-[:TIPO_DE]->(t);
+
+// 6. Crear relaciones de amistad bidireccionales
+MATCH (u1:User), (u2:User)
+WHERE u1 <> u2
+CREATE (u1)-[:FRIEND {
+    since: timestamp(),
+    status: 'active'
+}]->(u2);
+
+// 7. Crear algunas interacciones de ejemplo
+MATCH (u:User), (m:Moto)
+WITH u, m, rand() as r
+WHERE r < 0.1
+CREATE (u)-[:INTERACTED {
+    type: CASE 
+        WHEN r < 0.03 THEN 'like'
+        WHEN r < 0.06 THEN 'view'
+        ELSE 'bookmark'
+    END,
+    weight: CASE 
+        WHEN r < 0.03 THEN 3.0
+        WHEN r < 0.06 THEN 1.0
+        ELSE 2.0
+    END,
+    timestamp: timestamp()
+}]->(m);
+
+// 8. Verificar que todo se creó correctamente
+MATCH (n)
+RETURN DISTINCT labels(n) as Tipos_Nodos, count(*) as Cantidad;
+
+MATCH ()-[r]->()
+RETURN DISTINCT type(r) as Tipos_Relaciones, count(*) as Cantidad;
