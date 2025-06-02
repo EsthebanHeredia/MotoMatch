@@ -5,136 +5,703 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recomendaciones - MotoMatch</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">    <script>
-        window.motosRecomendadas = "{{ motos_recomendadas|tojson|safe }}";
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Datos de recomendaciones disponibles directamente para JavaScript -->
+    <script id="recommendations-data" type="application/json">{{ motos_recomendadas|default([])|tojson|safe }}</script>
+    
+    <script type="text/javascript">
+        // Simple assignment - our JavaScript will handle alternative loading if this fails
+        window.motosRecomendadas = {{ motos_recomendadas|default([])|tojson|safe }};
+        console.log("📊 Datos de recomendaciones cargados:", window.motosRecomendadas);
+        console.log("📊 Número de recomendaciones:", window.motosRecomendadas ? window.motosRecomendadas.length : 0);
     </script>
-    <script src="{{ url_for('static', filename='js/recomendaciones.js') }}" defer></script>
+    
+    <!-- Script principal para manejar las recomendaciones -->
+    <script src="{{ url_for('static', filename='js/recomendaciones-display-fixed.js') }}" defer></script>
+    
     <style>
+        /* Mejora del resumen de resultados del test - VERSIÓN NARANJA */
         .test-results-summary {
-            background-color: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
+            background: rgba(31, 17, 0, 0.4);
+            border-radius: 15px;
             padding: 20px;
-            margin-bottom: 30px;
-            border: 1px solid #f97316;
-            box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(247, 115, 22, 0.2);
+            position: relative;
+            overflow: hidden;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .test-results-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #f97316, #ff7e1d, #ff9a44);
+            z-index: 1;
         }
         
         .test-results-summary h2 {
-            color: #f97316;
+            color: #fff;
             margin-bottom: 15px;
-            font-size: 1.5rem;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .preferences-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
+            justify-content: center;
+            gap: 15px;
         }
         
         .preference-section {
+            background: rgba(247, 115, 22, 0.1);
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(247, 115, 22, 0.15);
+            transition: all 0.3s ease;
             flex: 1;
-            min-width: 250px;
+            min-width: 150px;
+            max-width: 250px;
+        }
+        
+        .preference-section:hover {
+            background: rgba(247, 115, 22, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(247, 115, 22, 0.1);
         }
         
         .preference-section h3 {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
             color: #fff;
+            margin-bottom: 10px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .preference-section h3::before {
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #f97316;
+        }
+        
+        .preference-section:nth-child(1) h3::before {
+            content: "\f5fd"; /* Ícono de moto */
+        }
+        
+        .preference-section:nth-child(2) h3::before {
+            content: "\f54e"; /* Ícono de tag */
+        }
+        
+        .preference-section:nth-child(3) h3::before {
+            content: "\f3d1"; /* Ícono de dinero */
         }
         
         .tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
         
         .tag {
-            display: inline-block;
-            padding: 5px 10px;
+            background: rgba(247, 115, 22, 0.15);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid rgba(247, 115, 22, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .tag:hover {
+            transform: translateY(-1px);
+            background: rgba(247, 115, 22, 0.25);
+        }
+        
+        .tag::before {
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 11px;
+            color: #f97316;
+        }
+        
+        .tag.estilo::before {
+            content: "\f5fd"; /* Ícono de moto */
+        }
+        
+        .tag.marca::before {
+            content: "\f54e"; /* Ícono de etiqueta */
+        }
+        
+        .tag.presupuesto::before {
+            content: "\f3d1"; /* Ícono de dinero */
+        }
+        
+        /* Responsive para sección más pequeña */
+        @media (max-width: 767px) {
+            .test-results-summary {
+                padding: 15px;
+            }
+            
+            .preferences-container {
+                flex-direction: column;
+            }
+            
+            .preference-section {
+                max-width: none;
+            }
+        }
+        
+        /* Estilos para la cuadrícula y tarjetas de motos */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+            padding: 20px 0;
+        }
+        
+        .moto-card {
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            background-color: rgba(249, 115, 22, 0.8);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .moto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .moto-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .moto-card h3 {
+            color: #fff;
+            padding: 15px;
+            margin: 0;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .moto-card p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .match-score {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .score-label {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .score-bar {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .score-fill {
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .score-percentage {
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .reasons-container {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .reasons-container h4 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .reasons-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .reasons-list li {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .reasons-list li i {
+            color: #2ecc71;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        
+        .favorita-btn:hover {
+            background: #e74c3c;
+            transform: scale(1.05);
+        }
+        
+        /* Nuevos estilos para mejores tarjetas */
+        .moto-image-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .moto-image-container img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .moto-card:hover .moto-image-container img {
+            transform: scale(1.1);
+        }
+        
+        .moto-info {
+            padding: 20px;
+        }
+        
+        .moto-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .moto-specs {
+            margin-bottom: 15px;
+        }
+        
+        .moto-specs p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .moto-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .btn-favorita,
+        .btn-detalles,
+        .btn-moto-ideal {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .btn-favorita {
+            background: rgba(231, 76, 60, 0.8);
             color: white;
-            font-size: 0.9rem;
+            border: 2px solid #e74c3c;
+        }
+        
+        .btn-favorita:hover {
+            background: #e74c3c;
+            transform: translateY(-1px);
+        }
+        
+        .btn-favorita.liked {
+            background: #e74c3c !important;
+            color: white !important;
+            border-color: #e74c3c !important;
+        }
+        
+        .btn-detalles {
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: 2px solid #3498db;
+        }
+        
+        .btn-detalles:hover {
+            background: #3498db;
+            transform: translateY(-1px);
+        }
+        
+        /* Estilos para botón de moto ideal */
+        .btn-moto-ideal {
+            background: rgba(247, 115, 22, 0.8);
+            color: white;
+            border: 2px solid #f97316;
+        }
+        
+        .btn-moto-ideal:hover {
+            background: #f97316;
+            transform: translateY(-1px);
+        }
+        
+        .btn-moto-ideal.btn-ideal-selected {
+            background: #ffd700 !important;
+            color: #000 !important;
+            border-color: #ffd700 !important;
+            cursor: not-allowed;
+        }
+        
+        .btn-moto-ideal.btn-ideal-selected:hover {
+            transform: none;
+            background: #ffd700 !important;
+        }
+        
+        .btn-moto-ideal:disabled {
+            cursor: not-allowed;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 10px;
+            }
+            
+            .moto-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+        
+        .favorita-btn:hover {
+            background: #e74c3c;
+            transform: scale(1.05);
+        }
+        
+        .favorita-btn.seleccionada {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .no-recommendations {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .no-recommendations i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .no-recommendations h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .no-recommendations p {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .nav-button {
+            display: inline-block;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
         
-        .tag[data-nivel="1"] {
-            background-color: rgba(249, 115, 22, 0.6);
+        .nav-button:hover {
+            background: #3498db;
+            transform: translateY(-2px);
+        }
+
+        /* Estilos para notificaciones - AGREGADO */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 280px;
+            min-width: 200px;
+            width: auto;
+            height: auto;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+
+        .notification.success {
+            border-left-color: #10b981;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.4;
+        }
+
+        .notification-content i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .notification-content span {
+            font-size: 14px;
+            font-weight: 500;
         }
         
-        .tag[data-nivel="2"] {
-            background-color: rgba(249, 115, 22, 0.7);
+        /* Debug info styling - AGREGADO */
+        .debug-info {
+            background-color: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffeb3b;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        /* Botón de regresar mejorado - estilo naranja coherente */
+        .back-dashboard-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(247, 115, 22, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            border: 2px solid rgba(247, 115, 22, 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .tag[data-nivel="3"] {
-            background-color: rgba(249, 115, 22, 0.8);
+        .back-dashboard-btn:hover {
+            background: #f97316;
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         
-        .tag[data-nivel="4"] {
-            background-color: rgba(249, 115, 22, 1);
-            font-weight: bold;
-            transform: scale(1.05);
+        .back-dashboard-btn i {
+            font-size: 16px;
+        }
+        
+        /* AGREGAR: Estilos para tituloFriends que faltaban */
+        .tituloFriends {
+            color: #fff;
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* MEJORAR: Estilos para main-container */
+        .main-container.neon-glass {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1200px;
+            min-height: 80vh;
+        }
+        
+        /* CORREGIR: Footer que estaba mal posicionado */
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        footer a.link {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        footer a.link:hover {
+            color: #5dade2;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="main-container neon-glass">        <a href="{{ url_for('main.dashboard') }}" id="regresoRecomedaciones" class="back-dashboard-btn">
-            <i class="fas fa-arrow-left"></i> Regresar al Dashboard
+    <div class="main-container neon-glass">
+        <a href="{{ url_for('main.dashboard') }}" id="regresoRecomedaciones" class="back-dashboard-btn">
+            <i class="fas fa-home"></i> Volver al Dashboard
         </a>
         <h1 class="tituloFriends">Tus Recomendaciones</h1>
         
         {% if test_data %}
         <div class="test-results-summary">
-            <h2>Basado en tus preferencias:</h2>
+            <h2><i class="fas fa-motorcycle"></i> Tus Preferencias</h2>
             <div class="preferences-container">
-                {% if test_data.get('estilos') %}
+                {% if test_data.estilos_preferidos %}
                 <div class="preference-section">
-                    <h3>Estilos que te gustan:</h3>
+                    <h3>Estilos</h3>
                     <div class="tags">
-                        {% for estilo, nivel in test_data['estilos'].items() %}
-                        <span class="tag" data-nivel="{{ nivel }}">{{ estilo }}</span>
+                        {% for estilo in test_data.estilos_preferidos %}
+                        <span class="tag estilo">{{ estilo }}</span>
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
                 
-                {% if test_data.get('marcas') %}
+                {% if test_data.marcas %}
                 <div class="preference-section">
-                    <h3>Marcas de tu preferencia:</h3>
+                    <h3>Marcas</h3>
                     <div class="tags">
-                        {% for marca, nivel in test_data['marcas'].items() %}
-                        <span class="tag" data-nivel="{{ nivel }}">{{ marca }}</span>
+                        {% for marca in test_data.marcas %}
+                        <span class="tag marca">{{ marca }}</span>
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
                 
-                {% if test_data.get('experiencia') %}
+                {% if test_data.presupuesto_min is defined and test_data.presupuesto_max is defined %}
                 <div class="preference-section">
-                    <h3>Nivel de experiencia:</h3>
-                    <p>{{ test_data['experiencia'] }}</p>
+                    <h3>Presupuesto</h3>
+                    <div class="tags">
+                        <span class="tag presupuesto">${{ test_data.presupuesto_min|default('0') }} - ${{ test_data.presupuesto_max|default('0') }}</span>
+                    </div>
+                </div>
+                {% elif test_data.presupuesto %}
+                <div class="preference-section">
+                    <h3>Presupuesto</h3>
+                    <div class="tags">
+                        <span class="tag presupuesto">{{ test_data.presupuesto }}</span>
+                    </div>
                 </div>
                 {% endif %}
             </div>
         </div>
         {% endif %}
-        <div class="grid-container">
-            {% for moto in motos_recomendadas %}
-            <div class="moto-card">
-                <img src="{{ moto.imagen }}" alt="Imagen de {{ moto.modelo }}" class="moto-img">
-                <h3>{{ moto.modelo }}</h3>
-                <p><strong>Marca:</strong> {{ moto.marca }}</p>
-                <p><strong>Estilo:</strong> {{ moto.estilo }}</p>
-                <p><strong>Precio:</strong> Q{{ moto.precio }}</p>
-                <button class="add-friend-btn" data-modelo="{{ moto.modelo }}">
-                    <i class="fas fa-star"></i> Marcar como Favorita
-                </button>
+        
+        <!-- DEBUG: Mostrar información de datos -->
+        
+        <!-- Container for dynamically generated motorcycle cards -->
+        <div class="grid-container" id="main-grid">
+            <!-- Las recomendaciones se cargarán aquí dinámicamente -->
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i><br>
+                Cargando recomendaciones...
             </div>
-            {% endfor %}
         </div>
+        
+        <!-- MOVER: Footer dentro del main-container para mejor layout -->
+        <footer>
+            <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="{{ url_for('main.home') }}" class="link">Inicio</a></p>
+        </footer>
     </div>
-    <footer>
-        <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="/" class="link">Inicio</a></p>
-    </footer>
+    
+
+
+    <!-- Función showNotification - MANTENER como está -->
+    <script>
+    // Función showNotification idéntica a populares.html
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Mostrar la notificación deslizándose desde la derecha
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        // Ocultar y eliminar la notificación después de 3 segundos
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Hacer showNotification disponible globalmente
+    window.showNotification = showNotification;
+    </script>
 </body>
 </html>

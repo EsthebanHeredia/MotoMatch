@@ -1,86 +1,252 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motos Populares - MotoMatch</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Motos Populares - MotoMatch</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Variables CSS dinámicas -->
     <style>
-        :root {
-            --hue1: 20;
-            --hue2: 30;
-            --radius: 12px;
-            --border: 1px;
-            --ease: cubic-bezier(0.5, 1, 0.89, 1);
+        /* Override para hacer las tarjetas visibles */
+        .moto-card {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+        
+        /* Animación de entrada suave */
+        .moto-card.fade-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Asegurar que el grid sea visible */
+        .grid-container {
+            opacity: 1 !important;
+            display: grid !important;
+        }
+        
+        /* Debug info styling */
+        .debug-info {
+            background: rgba(0, 255, 0, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid rgba(0, 255, 0, 0.5);        }
+        
+        /* Estilos para notificaciones - CORREGIDO para ser un rectángulo pequeño */
+        .notification {
+            position: fixed;
+            bottom: 20px;  /* Cambiado de top a bottom */
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;  /* Padding más pequeño */
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            z-index: 1000;
+            transform: translateX(100%);  /* Se desliza desde la derecha */
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 280px;  /* Ancho máximo definido */
+            min-width: 200px;  /* Ancho mínimo definido */
+            width: auto;       /* Ancho automático dentro de los límites */
+            height: auto;      /* Altura automática según contenido */
+            white-space: nowrap; /* Evita que el texto se envuelva */
+            overflow: hidden;    /* Oculta contenido que se desborde */
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+
+        .notification.success {
+            border-left-color: #10b981;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.4;  /* Altura de línea específica */
+        }
+
+        .notification-content i {
+            font-size: 16px;   /* Tamaño de icono más pequeño */
+            flex-shrink: 0;    /* Evita que el icono se comprima */
+        }
+
+        .notification-content span {
+            font-size: 14px;   /* Tamaño de texto específico */
+            font-weight: 500;  /* Peso de fuente medio */
         }
     </style>
-    <script>
-        window.motosPopulares = JSON.parse('{{ motos_populares|tojson|safe }}');
-    </script>
-    <script src="{{ url_for('static', filename='js/populares.js') }}" defer></script>
 </head>
 <body>
-    <div class="main-container neon-glass">
+    <div class="main-container">
         <a href="{{ url_for('main.dashboard') }}" class="back-dashboard-btn">
             <i class="fas fa-arrow-left"></i> Regresar al Dashboard
-        </a>        <h1 class="tituloFriends">
-            <span class="title-letter">M</span>
-            <span class="title-letter">o</span>
-            <span class="title-letter">t</span>
-            <span class="title-letter">o</span>
-            <span class="title-letter">s</span>
-            <span class="title-letter"> </span>
-            <span class="title-letter">P</span>
-            <span class="title-letter">o</span>
-            <span class="title-letter">p</span>
-            <span class="title-letter">u</span>
-            <span class="title-letter">l</span>
-            <span class="title-letter">a</span>
-            <span class="title-letter">r</span>
-            <span class="title-letter">e</span>
-            <span class="title-letter">s</span>
-        </h1>
+        </a>
         
-        <div class="trends-container">
-            <h3 class="trends-title"><i class="fas fa-chart-line"></i> Tendencias de esta semana</h3>
-            <div class="trends-badges">
-                <span class="trend-badge up">🔥 CBR 600RR</span>
-                <span class="trend-badge up">🚀 Duke 390</span>
-                <span class="trend-badge neutral">⭐ V-Strom 650</span>
-                <span class="trend-badge up">🔥 R nineT</span>
-            </div>
-        </div>
+        <h1>Motos Populares</h1>
         
+        <!-- GRID DE MOTOS CON CSS FORZADO -->
         <div class="grid-container">
             {% for moto in motos_populares %}
             <div class="moto-card">
-                <div class="shine"></div>
-                <div class="popular-badge">🔥 Popular</div>
-                <img src="{{ moto.imagen }}" alt="Imagen de {{ moto.modelo }}" class="moto-img">
-                <h3>{{ moto.modelo }}</h3>
-                <p><strong>Marca:</strong> {{ moto.marca }}</p>
-                <p><strong>Estilo:</strong> {{ moto.estilo }}</p>
-                <p><strong>Precio:</strong> Q{{ moto.precio }}</p>
+                <div class="popular-badge"></div>
+                
+                <img src="{{ moto.imagen }}" alt="{{ moto.modelo }}" class="moto-img" 
+                     onerror="this.src='/static/images/principal.webp'">
+                
+                <h3 style="color: white; margin: 10px 0;">{{ moto.modelo }}</h3>
+                <p style="color: #ccc;"><strong>Marca:</strong> {{ moto.marca }}</p>
+                <p style="color: #ccc;"><strong>Estilo:</strong> {{ moto.estilo }}</p>
+                <p style="color: #ffa500;"><strong>Precio:</strong> €{{ moto.precio }}</p>
+                
+                <div class="ranking-info">
+                    <div style="color: #ffa500;">
+                        <i class="fas fa-trophy"></i> #{{ moto.ranking_position }} en popularidad
+                    </div>
+                    <div style="color: #ccc; font-size: 12px;">
+                    </div>
+                </div>
+                
                 <div class="like-section">
-                    <button type="button" class="like-btn" data-modelo="{{ moto.modelo }}">
+                    <button type="button" class="like-btn" data-moto-id="{{ moto.moto_id }}">
                         <i class="far fa-heart"></i> Like
                     </button>
-                    <span class="like-info">
+                    <div class="like-info">
                         <span class="like-count">{{ moto.likes }}</span> personas les gustó
-                    </span>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-        <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-            <button id="reload-btn" class="reload-btn">
-                <i class="fas fa-sync-alt"></i> Recargar motos
-            </button>
-        </div>
     </div>
+
     <footer>
         <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="/" class="link">Inicio</a></p>
     </footer>
+
+    <!-- JAVASCRIPT DE LIKES -->
+    <script>    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔍 Página cargada - Iniciando sistema de likes y animaciones');
+        
+        // Activar animaciones de entrada para las tarjetas
+        const motoCards = document.querySelectorAll('.moto-card');
+        console.log(`📊 Encontradas ${motoCards.length} tarjetas de motos`);
+        
+        motoCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('fade-in');
+            }, index * 100); // Animación escalonada
+        });
+        
+        console.log('🎯 Inicializando sistema de likes...');
+        
+        const likeButtons = document.querySelectorAll('.like-btn');
+        
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const motoId = this.getAttribute('data-moto-id');
+                const modelo = this.getAttribute('data-modelo');
+                
+                console.log(`🔄 Procesando like para moto: ${motoId} (${modelo})`);
+                
+                if (!motoId) {
+                    showNotification('Error: No se pudo identificar la moto', 'error');
+                    return;
+                }
+                
+                this.disabled = true;
+                this.style.opacity = '0.6';
+                
+                fetch('/dar_like_moto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moto_id: motoId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📡 Respuesta del servidor:', data);
+                    
+                    if (data.success) {
+                        // Toggle del estado del like basado en la respuesta o estado actual
+                        const isCurrentlyLiked = this.classList.contains('liked');
+                        
+                        if (data.action === 'liked' || (!data.action && !isCurrentlyLiked)) {
+                            this.classList.add('liked');
+                            this.innerHTML = '<i class="fas fa-heart"></i> Te gusta';
+                            showNotification('¡Like registrado!', 'success');
+                        } else if (data.action === 'unliked' || (!data.action && isCurrentlyLiked)) {
+                            this.classList.remove('liked');
+                            this.innerHTML = '<i class="far fa-heart"></i> Like';
+                            showNotification('Like removido', 'success');
+                        } else {
+                            // Fallback para respuestas sin action
+                            this.classList.add('liked');
+                            this.innerHTML = '<i class="fas fa-heart"></i> Te gusta';
+                            showNotification(data.message || '¡Like registrado!', 'success');
+                        }
+                    } else {
+                        showNotification('Error: ' + (data.error || 'Error desconocido'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error:', error);
+                    showNotification('Error de conexión', 'error');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                });
+            });
+        });
+        
+        console.log(`✅ Sistema de likes inicializado para ${likeButtons.length} botones`);
+          function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Mostrar la notificación deslizándose desde la derecha
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // Ocultar y eliminar la notificación después de 3 segundos
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+    });
+    </script>
 </body>
 </html>

@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Friends - MotoMatch</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/friends-enhanced.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/friend-recommendations.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script>
     window.motosLikes = {{ motos_likes|tojson|safe }};
@@ -16,6 +18,18 @@
         <i class="fas fa-arrow-left"></i> Regresar al Dashboard
     </a>
     <h1 class="tituloFriends">Amigos</h1>
+    
+    <!-- Mensajes flash para recomendaciones de amigos -->
+    {% with messages = get_flashed_messages(category_filter=['friend-recommendations']) %}
+    {% if messages %}
+    <div class="friend-recommendation-flash">
+        {% for message in messages %}
+        {{ message|safe }}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    
 <div class="friends-section">
 <div class="friends-column">
 <div class="column-header">

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Motos que podrían gustarte - MotoMatch</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/friend_recommendation_notifications.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <style>
+        .recommendation-section {
+            margin-bottom: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .recommendation-section h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .card {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-img-top {
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .no-image {
+            height: 180px;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .recommendation-badge {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 12px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.85rem;
+            z-index: 1;
+        }
+        
+        .ideal-badge {
+            background-color: #3f51b5;
+        }
+        
+        .like-badge {
+            background-color: #ff5722;
+        }
+          .propagation-badge {
+            background-color: #007bff;
+            font-size: 0.8rem;
+            padding: 10px 12px;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .progress-bar {
+            background-color: #4caf50;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        /* Nuevos estilos para la sección híbrida */
+        .motos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .moto-card {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .moto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .moto-img img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        
+        .moto-info {
+            padding: 1rem;
+        }
+        
+        .moto-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .recommendation-type {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #fff;
+        }
+        
+        .recommendation-type.catalog {
+            background-color: #007bff;
+        }
+        
+        .recommendation-type.social {
+            background-color: #28a745;
+        }
+        
+        .moto-actions {
+            margin-top: 1rem;
+        }
+          .btn-like {
+            background-color: transparent;
+            border: none;
+            color: #ff5722;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .recommendation-subtitle {
+            color: #ccc;
+            font-style: italic;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .btn-moto-ideal {
+            background-color: #ffd700;
+            color: #000;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn-moto-ideal:hover {
+            background-color: #ffed4e;
+            color: #000;
+        }
+        
+        .btn-like {
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        
+        .btn-like:hover {
+            background-color: #e64a19;
+            color: white;
+        }
+        
+        .btn-ideal-selected {
+            background-color: #4caf50 !important;
+            color: white !important;
+        }
+        
+        .btn-like-selected {
+            background-color: #e91e63 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body>    <header>
+        <h1>Recomendaciones personalizadas</h1>
+        <p class="lead">Motos recomendadas específicamente para ti mediante nuestro algoritmo de aprendizaje social</p>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Volver al Dashboard</a>
+    </header>
+
+    <div class="main-container">
+        {% if not friends_data %}
+            <div class="alert alert-info">
+                <p>Aún no tienes amigos en la plataforma o tus amigos no han interactuado con suficientes motos.</p>
+                <a href="{{ url_for('main.friends') }}" class="btn btn-primary">Buscar Amigos</a>
+            </div>
+        {% else %}            <!-- Las secciones de motos ideales y motos con like se han eliminado -->
+            <!-- Solo se mostrará la sección de propagación de etiquetas -->            <!-- Sección de motos por propagación de etiquetas mejorada -->
+            <section class="recommendation-section">
+                <h2>Motos que podrían gustarte</h2>
+                <p class="recommendation-subtitle">Basadas en las motos ideales y gustos de tus amigos</p>
+                <div class="row">
+                    {% for item in propagation_motos %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="recommendation-badge propagation-badge">
+                                    {{ item.source_description if item.source_description else 'Recomendado por el sistema' }}
+                                </div>
+                                {% if item.moto.imagen %}
+                                    <img src="{{ item.moto.imagen }}" class="card-img-top" alt="{{ item.moto.marca }} {{ item.moto.modelo }}">
+                                {% else %}
+                                    <div class="no-image">Sin imagen disponible</div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ item.moto.marca }} {{ item.moto.modelo }}</h5>
+                                    <p class="card-text">
+                                        <strong>Tipo:</strong> {{ item.moto.tipo }}<br>
+                                        <strong>Precio:</strong> ${{ "{:,.0f}".format(item.moto.precio) }}<br>
+                                        {% if item.moto.cilindrada %}
+                                        <strong>Cilindrada:</strong> {{ item.moto.cilindrada }}cc<br>
+                                        {% endif %}
+                                        {% if item.moto.potencia %}
+                                        <strong>Potencia:</strong> {{ item.moto.potencia }}hp<br>
+                                        {% endif %}
+                                        <strong>Puntuación:</strong> {{ item.score }}/10
+                                    </p>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ (item.score * 10)|int }}%;" 
+                                            aria-valuenow="{{ (item.score * 10)|int }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ item.score }}/10
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Botones de acción -->
+                                    <div class="btn-group w-100" role="group">
+                                        <button class="btn btn-moto-ideal" data-moto-id="{{ item.moto.id }}" title="Marcar como Moto Ideal">
+                                            <i class="fas fa-star"></i> Moto Ideal
+                                        </button>
+                                        <button class="btn btn-like" data-moto-id="{{ item.moto.id }}" title="Me gusta">
+                                            <i class="fas fa-heart"></i> Like
+                                        </button>
+                                    </div>
+                                    
+                                    {% if item.moto.id %}
+                                    <a href="{{ url_for('main.moto_detail', moto_id=item.moto.id) }}" class="btn btn-primary w-100 mt-2">Ver detalles</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <h4>¡Sin recomendaciones aún!</h4>
+                                <p>Para obtener recomendaciones personalizadas:</p>
+                                <ul class="list-unstyled">
+                                    <li>• Marca algunas motos como "Moto Ideal"</li>
+                                    <li>• Da "Like" a motos que te gusten</li>
+                                    <li>• Agrega amigos que compartan tus gustos</li>
+                                </ul>
+                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Explorar motos</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Sección para propagación de etiquetas (híbrido) -->
+            {% if propagation_motos %}
+            <div class="recommendation-section">
+                <h2>Recomendaciones para ti</h2>
+                <div class="motos-grid">
+                    {% for moto in propagation_motos %}
+                    <div class="moto-card">
+                        <div class="moto-img">
+                            <img src="{{ moto.image_url or url_for('static', filename='img/moto_default.jpg') }}" alt="{{ moto.marca }} {{ moto.modelo }}">
+                        </div>
+                        <div class="moto-info">
+                            <h3>{{ moto.marca }} {{ moto.modelo }}</h3>
+                            <p class="moto-details">{{ moto.cilindrada }}</p>
+                            
+                            <!-- Indicador de fuente de recomendación -->
+                            {% if moto.source == 'catalog' %}
+                            <span class="recommendation-type catalog">Moto que podría gustarte</span>
+                            {% else %}
+                            <span class="recommendation-type social">Basada en tus amigos</span>
+                            {% endif %}
+                            
+                            <div class="moto-actions">
+                                <a href="{{ url_for('main.moto_detail', moto_id=moto.moto_id) }}" class="btn btn-primary">Ver detalles</a>
+                                <button class="btn btn-like" data-moto-id="{{ moto.moto_id }}">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <p>No tenemos recomendaciones personalizadas para ti en este momento.</p>
+            {% endif %}
+        {% endif %}
+    </div>    <footer>
+        <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="{{ url_for('main.home') }}" class="link">Inicio</a></p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Script para corregir las URLs problemáticas
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para verificar y corregir enlaces problemáticos
+        function fixBrokenLinks() {
+            document.querySelectorAll('a').forEach(function(link) {
+                if (link.href.includes('undefined') || link.href.includes('None')) {
+                    // Intentar corregir el enlace según su texto o contenido
+                    const linkText = link.textContent.trim().toLowerCase();
+                    
+                    if (linkText.includes('dashboard') || linkText.includes('volver')) {
+                        link.href = '/dashboard';
+                    } else if (linkText.includes('detalles') && link.closest('.card')) {
+                        // Buscar el id de la moto a partir del contexto
+                        const card = link.closest('.card');
+                        const motoId = card.querySelector('[data-moto-id]')?.dataset?.motoId;
+                        if (motoId) {
+                            link.href = `/moto-detail/${motoId}`;
+                        }
+                    } else if (linkText.includes('amigos')) {
+                        link.href = '/friends';
+                    } else if (linkText.includes('inicio')) {
+                        link.href = '/';
+                    }
+                }
+            });
+        }
+        
+        // Ejecutar correcciones
+        fixBrokenLinks();
+        
+        // Manejar los botones de Like
+        document.querySelectorAll('.btn-like').forEach(button => {
+            button.addEventListener('click', function() {
+                const motoId = this.getAttribute('data-moto-id');
+                if (motoId) {
+                    fetch('/dar_like_moto', {  // ✅ Cambiar de '/like_moto' a '/dar_like_moto'
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ moto_id: motoId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.querySelector('i').style.color = '#e74c3c';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

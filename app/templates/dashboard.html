@@ -13,20 +13,20 @@
     </div>
     
     <div class="dashboard-options">
-      <a href="/friends" class="dashboard-box">
+      <a href="{{ url_for('main.friends') }}" class="dashboard-box">
         <div class="icon-container">
           <i class="fas fa-users"></i>
         </div>
         <p>Amigos</p>
       </a>
       
-      <a href="/populares" class="dashboard-box">
+      <a href="{{ url_for('main.populares') }}" class="dashboard-box">
         <div class="icon-container">
           <i class="fas fa-motorcycle"></i>
         </div>
         <p>Motos populares</p>
       </a>
-        <a href="/test" class="dashboard-box">
+        <a href="{{ url_for('main.test') }}" class="dashboard-box">
         <div class="icon-container">
           <i class="fas fa-brain"></i>
         </div>
@@ -39,11 +39,57 @@
         </div>
         <p>Mi moto ideal</p>
       </a>
+        <a href="{{ url_for('main.motos_que_podrian_gustarte') }}" class="dashboard-box">
+        <div class="icon-container">
+          <i class="fas fa-thumbs-up"></i>
+        </div>
+        <p>Motos que podrían gustarte</p>
+      </a>
+      <a href="{{ url_for('main.logout') }}" class="dashboard-box">
+        <div class="icon-container">
+          <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <p>Cerrar sesión</p>
+      </a>
     </div>
   </div>
   
   <footer>
-    <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="/" class="link">Inicio</a></p>
+    <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="{{ url_for('main.home') }}" class="link">Inicio</a></p>
   </footer>
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verificar que los enlaces funcionen correctamente
+    const checkLink = function(link) {
+      if (link.href.includes('undefined') || link.href.includes('None')) {
+        // Corregir enlaces problemáticos según su contenido o icono
+        const linkText = link.textContent.trim().toLowerCase();
+        const hasIcon = link.querySelector('i');
+        
+        if (hasIcon) {
+          const iconClass = hasIcon.className;
+          if (iconClass.includes('fa-users') || linkText.includes('amigos')) {
+            link.href = '/friends';
+          } else if (iconClass.includes('fa-motorcycle') || linkText.includes('populares')) {
+            link.href = '/populares';
+          } else if (iconClass.includes('fa-brain') || linkText.includes('test')) {
+            link.href = '/test';          } else if (iconClass.includes('fa-star') || linkText.includes('ideal')) {
+            link.href = '/moto_ideal';
+          } else if (iconClass.includes('fa-thumbs-up') || linkText.includes('gustarte')) {
+            link.href = '/motos-que-podrian-gustarte';
+          } else if (iconClass.includes('fa-sign-out-alt') || linkText.includes('cerrar sesión')) {
+            link.href = '/logout';
+          }
+        } else if (linkText.includes('inicio')) {
+          link.href = '/';
+        }
+      }
+    };
+    
+    // Comprobar todos los enlaces en la página
+    document.querySelectorAll('a').forEach(checkLink);
+  });
+  </script>
 </body>
 </html>

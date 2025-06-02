@@ -4,10 +4,34 @@
 <meta charset="UTF-8">
 <title>Registro - MotoMatch</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<style>
+  .flash-messages {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: rgba(255, 0, 0, 0.2);
+    border-radius: 5px;
+  }
+  .flash-message {
+    color: #ff6b6b;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+</style>
 </head>
-<body>
-  <div class="login-box">
+<body>  <div class="login-box">
     <h1>Regístrate en MotoMatch</h1>
+    
+    <!-- Flash messages section -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-messages">
+      {% for message in messages %}
+      <div class="flash-message">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    
     <form action="{{ url_for('main.register') }}" method="post">
       <div class="user-box">
         <input type="text" name="username" required="">
@@ -22,7 +46,7 @@
     <p style="margin-top: 20px;">¿Ya tienes una cuenta? <a href="{{ url_for('main.login') }}" class="link">Inicia sesión</a></p>
   </div>
   <footer>
-    <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="/" class="link">Inicio</a> </p>
+    <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="{{ url_for('main.home') }}" class="link">Inicio</a> </p>
   </footer>
 </body>
 </html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalles de la Moto - MotoMatch</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .moto-detail-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .moto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .moto-title {
+            font-size: 2em;
+            color: #333;
+            margin: 0;
+        }
+
+        .moto-image-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .moto-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .moto-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-card h3 {
+            color: #444;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .info-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .likes-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .like-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .like-button:hover {
+            background-color: #0056b3;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .nav-button {
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-button {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .back-button:hover {
+            background-color: #5a6268;
+            color: white;
+            text-decoration: none;
+        }
+
+        .recommendation-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .recommendation-button:hover {
+            background-color: #218838;
+            color: white;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .moto-detail-container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .moto-image-container {
+                height: 300px;
+            }
+
+            .moto-title {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="moto-detail-container">
+        <div class="moto-header">
+            <h1 class="moto-title">{{ moto.marca }} {{ moto.modelo }}</h1>
+            <div class="likes-section">
+                <span><i class="fas fa-heart"></i> {{ moto.likes|default(0) }} likes</span>
+                <button class="like-button" onclick="likeMoto('{{ moto.id }}')">
+                    <i class="fas fa-heart"></i> Me gusta
+                </button>
+            </div>
+        </div>
+
+        <div class="moto-image-container">
+            <img src="{{ moto.imagen }}" alt="{{ moto.marca }} {{ moto.modelo }}" class="moto-image">
+        </div>
+
+        <div class="moto-info-grid">
+            <div class="info-card">
+                <h3>Especificaciones Básicas</h3>
+                <p><strong>Marca:</strong> {{ moto.marca }}</p>
+                <p><strong>Modelo:</strong> {{ moto.modelo }}</p>
+                <p><strong>Tipo:</strong> {{ moto.tipo }}</p>
+                <p><strong>Precio:</strong> ${{ "%.2f"|format(moto.precio|float) }}</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Características Técnicas</h3>
+                <p><strong>Cilindrada:</strong> {{ moto.cilindrada }}</p>
+                {% if moto.potencia %}<p><strong>Potencia:</strong> {{ moto.potencia }}</p>{% endif %}
+                {% if moto.peso %}<p><strong>Peso:</strong> {{ moto.peso }} kg</p>{% endif %}
+                {% if moto.torque %}<p><strong>Torque:</strong> {{ moto.torque }} Nm</p>{% endif %}
+            </div>
+
+            {% if moto.additional_features %}
+            <div class="info-card">
+                <h3>Características Adicionales</h3>
+                {% for feature in moto.additional_features %}
+                <p>{{ feature }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="nav-buttons">
+            <a href="{{ url_for('main.motos_que_podrian_gustarte') }}" class="nav-button back-button">
+                <i class="fas fa-arrow-left"></i> Volver a Recomendaciones
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 MotoMatch. Todos los derechos reservados. | <a href="{{ url_for('main.home') }}" class="link">Inicio</a></p>
+    </footer>
+
+    <script>
+    function likeMoto(motoId) {
+        console.log('Enviando like para moto:', motoId); // 🔍 Debug
+        
+        fetch('/dar_like_moto', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ moto_id: motoId })
+        })
+        .then(response => {
+            console.log('Respuesta recibida:', response.status); // 🔍 Debug
+            return response.json();
+        })
+        .then(data => {
+            console.log('Datos recibidos:', data); // 🔍 Debug
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.error || 'Error al dar like');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para verificar y corregir enlaces problemáticos
+        function fixBrokenLinks() {
+            document.querySelectorAll('a').forEach(function(link) {
+                if (link.href.includes('undefined') || link.href.includes('None')) {
+                    const linkText = link.textContent.trim().toLowerCase();
+                    
+                    if (linkText.includes('volver') || link.classList.contains('btn-outline-secondary')) {
+                        link.href = '/dashboard';
+                    } else if (linkText.includes('inicio')) {
+                        link.href = '/';
+                    }
+                }
+            });
+        }
+        
+        fixBrokenLinks();
+    });
+    </script>
+</body>
+</html>
