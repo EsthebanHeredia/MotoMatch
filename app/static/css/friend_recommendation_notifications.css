@@ -1,0 +1,70 @@
+.friend-recommendations {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 4px solid #3f51b5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.friend-recommendations h3 {
+    color: #3f51b5;
+    margin-top: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.friend-recommendations h4 {
+    color: #555;
+    margin: 10px 0 5px;
+    font-size: 1.1rem;
+}
+
+.ideal-moto-rec {
+    background-color: #e8eaf6;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.liked-motos-rec {
+    background-color: #fff3e0;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.label-prop-rec {
+    background-color: #e8f5e9;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #4caf50;
+    margin-bottom: 10px;
+}
+
+.reasons, .liked-list, .recommendation-list {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.reasons li, .liked-list li, .recommendation-list li {
+    margin-bottom: 3px;
+}
+
+.view-more {
+    display: inline-block;
+    background-color: #3f51b5;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.view-more:hover {
+    background-color: #303f9f;
+    text-decoration: none;
+    color: white;
+}

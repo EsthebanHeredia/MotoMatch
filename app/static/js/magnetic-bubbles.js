@@ -1,779 +1,718 @@
 /**
- * Magnetic Bubbles - Un selector de burbujas interactivo inspirado en Magnetic/Apple Music
- * Para MotoMatch Test de Preferencias
+ * MagneticBubbles - Componente interactivo para selección mediante burbujas
+ * Versión corregida con interactividad restaurada
  */
-
-console.log('Cargando MagneticBubbles.js...');
-
 class MagneticBubbles {
-  constructor(containerId, items, options = {}) {
-    // El elemento contenedor donde se mostrarán las burbujas
-    this.container = document.getElementById(containerId);
-    if (!this.container) throw new Error(`Contenedor con ID "${containerId}" no encontrado`);
-      // Los elementos a mostrar como burbujas
-    this.items = items || [];
+  constructor(canvas, options = {}) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
     
-    // Opciones configurables con valores por defecto
-    this.options = {      minRadius: 40,              // Radio mínimo de las burbujas (era 30)
-      maxRadius: 65,              // Radio máximo de las burbujas (era 55)      
-      padding: 25,                // Espacio entre burbujas (aumentado para evitar traslape)
-      dampening: 0.98,            // Factor de amortiguación para el movimiento (reducido para mantener más energía)
-      attractionForce: 0,         // Fuerza de atracción al centro (0 para que floten libremente)
-      repulsionForce: 0.6,        // Fuerza de repulsión entre burbujas (aumentada para mayor separación)
-      colorPalette: [             // Paleta de colores: ahora gris para todas
-        '#707070', '#707070', '#707070', '#707070', '#707070',
-        '#707070', '#707070', '#707070', '#707070', '#707070'
-      ],
-      selectionLevels: 4,         // Niveles de selección (0 = no seleccionado, 1-4 = niveles)
-      textColor: '#ffffff',       // Color del texto en las burbujas
-      textFont: '14px Arial',     // Fuente del texto (era 12px)
-      animationInterval: 16,      // Intervalo de animación (ms)
-      initialImpulse: 3,          // Impulso inicial máximo
-      ...options                  // Opciones personalizadas
+    // Aplicar pixel ratio para mejorar la resolución
+    const pixelRatio = options.pixelRatio || window.devicePixelRatio || 1;
+    if (pixelRatio > 1) {
+      // Guardar tamaño actual del canvas
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // Establecer tamaño de canvas con alta resolución
+      canvas.width = width * pixelRatio;
+      canvas.height = height * pixelRatio;
+      
+      // Escalar el contexto para mantener tamaño visual pero aumentar resolución
+      this.ctx.scale(pixelRatio, pixelRatio);
+      
+      // Establecer dimensiones CSS para mantener tamaño visual
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      
+      console.log(`Canvas inicializado con ratio ${pixelRatio}: ${canvas.width}x${canvas.height} (visual: ${width}x${height})`);
+    }
+    
+    // Opciones por defecto mejoradas
+    this.options = {
+      width: options.width || canvas.width / pixelRatio,
+      height: options.height || canvas.height / pixelRatio,
+      selectionMode: options.selectionMode || 'single',
+      canvasBackground: options.canvasBackground || 'rgba(0, 0, 0, 0.8)',
+      bubbleBaseColor: options.bubbleBaseColor || '#f97316',
+      bubbleSelectedColor: options.bubbleSelectedColor || '#ea580c',
+      textColor: options.textColor || '#ffffff',
+      
+      // Factores configurables para tamaño y comportamiento
+      bubbleSizeFactor: options.bubbleSizeFactor || 0.12, // Factor relativo al tamaño del canvas
+      minDistance: options.minDistance || 15, // Distancia mínima entre burbujas
+      maxInitialVelocity: options.maxInitialVelocity || 3, // Velocidad inicial
+      textScaleFactor: options.textScaleFactor || 1.0, // Factor de escala para texto
+      friction: options.friction || 0.02, // Fricción para ralentizar movimiento
+      attraction: options.attraction || 0.02, // Fuerza de atracción
     };
     
-    // Estado interno
-    this.bubbles = [];            // Array de burbujas
-    this.mouse = { x: 0, y: 0, pressed: false };
-    this.draggedBubble = null;    // Burbuja que se está arrastrando
-    this.canvas = null;           // Canvas para dibujar
-    this.ctx = null;              // Contexto de dibujo
-    this.animationId = null;      // ID para gestionar animaciones
-    this.selectedBubbles = {};    // Burbujas seleccionadas
-    this.initialized = false;     // Estado de inicialización
-    this.lastUpdate = Date.now(); // Último tiempo de actualización
-    this.clickStartTime = 0;      // Tiempo en que inició el clic (para distinguir entre clic y arrastre)
-    this.dragThreshold = 5;       // Distancia en píxeles para considerar un arrastre en lugar de un clic
+    // Datos de los items
+    this.items = options.items || [];
     
-    // Inicializar
-    this._init();
+    // Inicializar burbujas
+    this.bubbles = [];
+    this.initBubbles();
+    
+    // Estado de interacción
+    this.mouse = { x: 0, y: 0, down: false };
+    this.selectedBubble = null;
+    this.hoveredBubble = null;
+    this.isDragging = false;
+    
+    // Inicializar listeners - CRÍTICO para la interactividad
+    this.initEventListeners();
+    
+    // Iniciar bucle de animación
+    this.animate();
+    
+    // Indicar que la inicialización se completó correctamente
+    console.log(`MagneticBubbles inicializado con ${this.bubbles.length} burbujas`);
   }
   
-  /**
-   * Inicializa el componente
-   */
-  _init() {
-    try {
-      // Crear el canvas
-      this.canvas = document.createElement('canvas');
-      this.canvas.style.width = '100%';
-      this.canvas.style.height = '100%';
-      this.canvas.style.display = 'block';
-      this.container.appendChild(this.canvas);
-      
-      // Ajustar tamaño del canvas al contenedor
-      this._resizeCanvas();
-      
-      // Obtener el contexto de dibujo
-      this.ctx = this.canvas.getContext('2d');
-      if (!this.ctx) {
-        throw new Error("No se pudo obtener el contexto 2D del canvas");
-      }
-      
-      // Crear las burbujas
-      this._createBubbles();
-      
-      // Configurar eventos
-      this._setupEvents();
-      
-      // Iniciar la animación
-      this._startAnimation();
-      
-      this.initialized = true;
-      console.log('MagneticBubbles inicializado: ', this.bubbles.length, 'burbujas creadas');
-    } catch (error) {
-      console.error('Error al inicializar MagneticBubbles:', error);
-      // Intentar mostrar un mensaje visual de error en el canvas
-      if (this.canvas && this.ctx) {
-        this.ctx.fillStyle = '#f97316';
-        this.ctx.font = '14px Arial';
-        this.ctx.fillText('Error al inicializar las burbujas interactivas', 20, 30);
-        this.ctx.fillText('Por favor, recarga la página', 20, 50);
-      }
-    }
-  }
-    /**
-   * Crea las burbujas iniciales
-   */
-  _createBubbles() {
-    // Limpiar burbujas existentes
-    this.bubbles = [];
+  // Inicializar burbujas con mejor distribución
+  initBubbles() {
+    const centerX = this.options.width / 2;
+    const centerY = this.options.height / 2;
     
-    // Calcular distribución en cuadrícula para posición inicial
-    const itemCount = this.items.length;
-    const gridSize = Math.ceil(Math.sqrt(itemCount));
+    // Calcular radio dinámicamente según el número de elementos
+    const numItems = this.items.length;
+    const minDimension = Math.min(this.options.width, this.options.height);
     
-    // Calcular el tamaño de cada celda de la cuadrícula
-    const cellWidth = this.canvas.width / gridSize;
-    const cellHeight = this.canvas.height / gridSize;
+    // Calcular radio para distribución, ajustando según número de elementos
+    const radius = minDimension * 0.35 * (1 + (numItems > 10 ? 0.2 : 0));
     
-    // Calcular radio máximo efectivo (incluyendo padding)
-    const maxRadiusWithPadding = this.options.maxRadius + this.options.padding;
-    
-    // Asegurar que las celdas son lo suficientemente grandes para las burbujas
-    const minCellDimension = Math.min(cellWidth, cellHeight);
-    
-    // Ajustar el radio si es necesario para evitar solapamientos
-    const adjustedMaxRadius = Math.min(
-      this.options.maxRadius,
-      minCellDimension / 2 - this.options.padding
-    );
-    
-    const adjustedMinRadius = Math.min(
-      this.options.minRadius,
-      adjustedMaxRadius * 0.7
-    );
-    
-    // Crear una burbuja por cada ítem
-    this.items.forEach((item, idx) => {
-      // Calcular posición en la cuadrícula
-      const row = Math.floor(idx / gridSize);
-      const col = idx % gridSize;
+    // Crear burbujas con tamaño basado en el factor configurado
+    this.items.forEach((item, index) => {
+      // Distribuir en círculo con ángulo basado en el índice
+      const angle = (index / numItems) * Math.PI * 2;
       
-      // Calcular el centro de la celda
-      const cellCenterX = (col + 0.5) * cellWidth;
-      const cellCenterY = (row + 0.5) * cellHeight;
+      // Añadir algo de variación al radio para evitar superposición
+      const variationFactor = 0.85 + 0.3 * Math.random();
+      const distance = radius * variationFactor;
       
-      // Añadir una variación aleatoria más pequeña para evitar solapamientos
-      const variationFactor = 0.3; // Reducido de 0.4-0.5 a 0.3
-      const x = cellCenterX + (Math.random() * 2 - 1) * variationFactor * (cellWidth / 2 - maxRadiusWithPadding);
-      const y = cellCenterY + (Math.random() * 2 - 1) * variationFactor * (cellHeight / 2 - maxRadiusWithPadding);
+      // Posición inicial con desplazamiento para que no todas estén en el mismo punto
+      const x = centerX + Math.cos(angle) * distance;
+      const y = centerY + Math.sin(angle) * distance;
       
-      // Radio aleatorio dentro del rango ajustado
-      const radius = Math.random() * (adjustedMaxRadius - adjustedMinRadius) 
-                    + adjustedMinRadius;
-                    
-      // Color aleatorio de la paleta
-      const color = this.options.colorPalette[idx % this.options.colorPalette.length];
+      // Velocidad inicial más baja para movimiento más controlado
+      const vx = (Math.random() - 0.5) * this.options.maxInitialVelocity;
+      const vy = (Math.random() - 0.5) * this.options.maxInitialVelocity;
       
-      // Velocidad inicial aleatoria (más suave)
-      const velX = (Math.random() * 2 - 1) * this.options.initialImpulse * 0.7;
-      const velY = (Math.random() * 2 - 1) * this.options.initialImpulse * 0.7;
+      // Tamaño basado en la dimensión mínima del canvas y factor configurable
+      // Ajustar tamaño inversamente proporcional al número de elementos
+      const sizeFactor = this.options.bubbleSizeFactor * (1 - (numItems > 8 ? 0.1 * (numItems-8)/8 : 0));
+      const bubbleRadius = minDimension * sizeFactor;
       
-      // Crear la burbuja
+      // Crear la burbuja con las nuevas propiedades
       this.bubbles.push({
-        id: idx,
+        id: item.id,
+        label: item.label,
+        value: item.value || 1.0,
         x: x,
         y: y,
-        radius: radius,
-        originalRadius: radius, // Guardar radio original para animaciones
-        color: color,
-        text: item,
-        vx: velX,
-        vy: velY,
-        selected: 0, // 0 = no seleccionado
-        startX: 0,   // Posición inicial al comenzar un arrastre
-        startY: 0    // Posición inicial al comenzar un arrastre
+        vx: vx,
+        vy: vy,
+        radius: bubbleRadius,
+        selected: false,
+        selectionLevel: 0, // Para selección gradual
+        hovered: false,
+        originalRadius: bubbleRadius // Guardar radio original
       });
     });
   }
-    /**
-   * Configura los eventos de interacción
-   */
-  _setupEvents() {
-    // Evento de redimensión
-    window.addEventListener('resize', () => {
-      this._resizeCanvas();
-      this._repositionBubbles();
-    });
+  
+  // Inicializar los listeners de eventos para interacción con el canvas
+  initEventListeners() {
+    // IMPORTANTE: Usamos this.canvas, no document, para capturar eventos solo en este canvas
     
-    // Eventos de ratón/táctil
-    this.canvas.addEventListener('mousedown', (e) => this._handleMouseDown(e));
-    this.canvas.addEventListener('touchstart', (e) => this._handleTouchStart(e));
-    
-    this.canvas.addEventListener('mousemove', (e) => this._handleMouseMove(e));
-    this.canvas.addEventListener('touchmove', (e) => this._handleTouchMove(e), { passive: false });
-    
-    this.canvas.addEventListener('mouseup', () => this._handleMouseUp());
-    this.canvas.addEventListener('touchend', () => this._handleMouseUp());
-    this.canvas.addEventListener('mouseleave', () => this._handleMouseUp());
-    
-    // Aplicar impulso aleatorio al hacer clic en área vacía
-    this.canvas.addEventListener('click', (e) => {
-      const mousePos = this._getMousePos(e);
-      const clickedBubble = this._findBubbleAtPosition(mousePos.x, mousePos.y);
+    // Mouse move
+    this.canvas.addEventListener('mousemove', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = (e.clientX - rect.left);
+      this.mouse.y = (e.clientY - rect.top);
       
-      if (!clickedBubble) {
-        // Clic en área vacía, aplicar impulso aleatorio a todas las burbujas
-        this._applyRandomImpulse();
-      }
-    });
-  }
-    /**
-   * Inicia la animación de las burbujas
-   */
-  _startAnimation() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-    }
-    
-    const animate = () => {
-      // Actualizar posiciones
-      this._updatePositions();
-      
-      // Dibujar en el canvas
-      this._render();
-      
-      // Continuar animación
-      this.animationId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    // Aplicar impulso aleatorio periódicamente para mantener el movimiento
-    // Más frecuente pero menor intensidad para un movimiento más constante
-    setInterval(() => this._applyRandomImpulse(0.4), 2000);
-    // Y ocasionalmente un impulso más fuerte
-    setInterval(() => this._applyRandomImpulse(1.0), 8000);
-  }
-  /**
-   * Actualiza las posiciones de las burbujas en cada frame
-   */
-  _updatePositions() {
-    const now = Date.now();
-    const dt = (now - this.lastUpdate) / 16; // normalizar a ~60fps
-    this.lastUpdate = now;
-    
-    // Actualizar cada burbuja
-    this.bubbles.forEach((bubble) => {
-      // Si el ratón está arrastrando esta burbuja, no actualizar su posición aquí
-      if (this.draggedBubble === bubble) {
-        return;
-      }
-      
-      // Aplicar repulsión entre burbujas
-      this._applyBubbleRepulsion(bubble, dt);
-      
-      // Aplicar ligero movimiento aleatorio para mantenerlas flotando
-      if (Math.random() < 0.05) {
-        bubble.vx += (Math.random() - 0.5) * 0.5;
-        bubble.vy += (Math.random() - 0.5) * 0.5;
-      }
-      
-      // Amortiguación
-      bubble.vx *= this.options.dampening;
-      bubble.vy *= this.options.dampening;
-      
-      // Actualizar posición
-      bubble.x += bubble.vx * dt;
-      bubble.y += bubble.vy * dt;
-      
-      // Rebote en los bordes
-      this._handleEdgeCollisions(bubble);
-    });
-  }  /**
-   * Aplica repulsión entre burbujas para evitar solapamientos
-   */
-  _applyBubbleRepulsion(bubble, dt) {
-    this.bubbles.forEach((other) => {
-      if (bubble === other) return;
-      
-      const dx = other.x - bubble.x;
-      const dy = other.y - bubble.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const minDistance = bubble.radius + other.radius + this.options.padding;
-      
-      if (distance < minDistance) {
-        // Calcular vector de dirección normalizado
-        const nx = dx / distance || 0; // Evitar división por cero
-        const ny = dy / distance || 0; // Evitar división por cero
+      // Verificar hover
+      let hoveredBubble = null;
+      for (const bubble of this.bubbles) {
+        const distance = Math.sqrt(
+          Math.pow(this.mouse.x - bubble.x, 2) + 
+          Math.pow(this.mouse.y - bubble.y, 2)
+        );
         
-        // Fuerza de repulsión inversamente proporcional a la distancia
-        // Aumentamos el exponente para que la fuerza sea más fuerte cuando están muy cerca
-        const force = this.options.repulsionForce * Math.pow((minDistance - distance) / minDistance, 3.0);
-        
-        // Si están demasiado cerca, aplicar una corrección directa de posición más agresiva
-        if (distance < minDistance * 0.95) {
-          const correctionFactor = (minDistance - distance) * 0.2;
-          bubble.x -= nx * correctionFactor;
-          bubble.y -= ny * correctionFactor;
-          other.x += nx * correctionFactor;
-          other.y += ny * correctionFactor;
-          
-          // Añadir velocidad en dirección opuesta para más energía en la separación
-          const energyBoost = 0.3;
-          bubble.vx -= nx * energyBoost;
-          bubble.vy -= ny * energyBoost;
-          other.vx += nx * energyBoost;
-          other.vy += ny * energyBoost;
+        if (distance < bubble.radius) {
+          hoveredBubble = bubble;
+          break;
         }
-        
-        // Aplicar fuerza de repulsión más fuerte cuando están cerca
-        const scaledForce = force * dt * 3.5;
-        bubble.vx -= nx * scaledForce;
-        bubble.vy -= ny * scaledForce;
-        other.vx += nx * scaledForce;
-        other.vy += ny * scaledForce;
+      }
+      
+      // Actualizar estado de hover
+      this.bubbles.forEach(bubble => {
+        bubble.hovered = (bubble === hoveredBubble);
+      });
+      
+      this.hoveredBubble = hoveredBubble;
+      
+      // Si estamos arrastrando, mover la burbuja seleccionada
+      if (this.isDragging && this.selectedBubble) {
+        this.selectedBubble.x = this.mouse.x;
+        this.selectedBubble.y = this.mouse.y;
+        this.selectedBubble.vx = 0;
+        this.selectedBubble.vy = 0;
       }
     });
+    
+    // Mouse down - CRUCIAL para detectar clics
+    this.canvas.addEventListener('mousedown', (e) => {
+      e.preventDefault(); // Prevenir comportamiento predeterminado
+      this.mouse.down = true;
+      
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = (e.clientX - rect.left);
+      this.mouse.y = (e.clientY - rect.top);
+      
+      // Verificar si hay una burbuja bajo el cursor
+      let clickedBubble = null;
+      for (const bubble of this.bubbles) {
+        const distance = Math.sqrt(
+          Math.pow(this.mouse.x - bubble.x, 2) + 
+          Math.pow(this.mouse.y - bubble.y, 2)
+        );
+        
+        if (distance < bubble.radius) {
+          clickedBubble = bubble;
+          break;
+        }
+      }
+      
+      // Si hay una burbuja, seleccionarla
+      if (clickedBubble) {
+        this.toggleSelection(clickedBubble);
+        this.selectedBubble = clickedBubble;
+        this.isDragging = true;
+      } else {
+        // Si se hace clic en el fondo, crear un "empujón" a todas las burbujas
+        for (const bubble of this.bubbles) {
+          const dx = bubble.x - this.mouse.x;
+          const dy = bubble.y - this.mouse.y;
+          const distance = Math.sqrt(dx*dx + dy*dy);
+          
+          // Aplicar fuerza inversamente proporcional a la distancia
+          const force = 10 / (distance + 1);
+          const angle = Math.atan2(dy, dx);
+          
+          bubble.vx += Math.cos(angle) * force;
+          bubble.vy += Math.sin(angle) * force;
+        }
+      }
+    });
+    
+    // Mouse up
+    this.canvas.addEventListener('mouseup', (e) => {
+      e.preventDefault(); // Prevenir comportamiento predeterminado
+      this.mouse.down = false;
+      this.isDragging = false;
+      this.selectedBubble = null;
+    });
+    
+    // Touch events para dispositivos móviles - CRUCIAL para móviles
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevenir scroll
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = (touch.clientX - rect.left);
+      this.mouse.y = (touch.clientY - rect.top);
+      this.mouse.down = true;
+      
+      // Verificar si se tocó una burbuja
+      let touchedBubble = null;
+      for (const bubble of this.bubbles) {
+        const distance = Math.sqrt(
+          Math.pow(this.mouse.x - bubble.x, 2) + 
+          Math.pow(this.mouse.y - bubble.y, 2)
+        );
+        
+        if (distance < bubble.radius) {
+          touchedBubble = bubble;
+          break;
+        }
+      }
+      
+      if (touchedBubble) {
+        this.toggleSelection(touchedBubble);
+      } else {
+        // Si se toca el fondo, crear un "empujón" a todas las burbujas
+        for (const bubble of this.bubbles) {
+          const dx = bubble.x - this.mouse.x;
+          const dy = bubble.y - this.mouse.y;
+          const distance = Math.sqrt(dx*dx + dy*dy);
+          
+          // Aplicar fuerza inversamente proporcional a la distancia
+          const force = 10 / (distance + 1);
+          const angle = Math.atan2(dy, dx);
+          
+          bubble.vx += Math.cos(angle) * force;
+          bubble.vy += Math.sin(angle) * force;
+        }
+      }
+    });
+    
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault(); // Prevenir scroll
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = (touch.clientX - rect.left);
+      this.mouse.y = (touch.clientY - rect.top);
+    });
+    
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault(); // Prevenir comportamiento predeterminado
+      this.mouse.down = false;
+    });
+    
+    // Listener para redimensionamiento
+    window.addEventListener('resize', () => {
+      this.handleResize();
+    });
   }
-    /**
-   * Maneja las colisiones con los bordes del canvas
-   */
-  _handleEdgeCollisions(bubble) {
-    // Coeficiente de restitución (rebote)
-    const bounceFactor = -0.95;
-    // Umbral mínimo de velocidad para asegurar rebotes visibles
-    const minVelocity = 0.8;
-    
-    // Rebote en el borde derecho
-    if (bubble.x + bubble.radius > this.canvas.width) {
-      bubble.x = this.canvas.width - bubble.radius;
-      // Asegurar que la velocidad post-rebote sea suficiente para un buen efecto visual
-      bubble.vx = Math.max(Math.abs(bubble.vx * bounceFactor), minVelocity) * Math.sign(bounceFactor);
-      // Aplicar pequeño impulso en la dirección Y para hacer el movimiento más interesante
-      bubble.vy += (Math.random() - 0.5) * 0.5;
-    }
-    
-    // Rebote en el borde izquierdo
-    if (bubble.x - bubble.radius < 0) {
-      bubble.x = bubble.radius;
-      bubble.vx = Math.max(Math.abs(bubble.vx * bounceFactor), minVelocity) * Math.sign(-bounceFactor);
-      bubble.vy += (Math.random() - 0.5) * 0.5;
-    }
-    
-    // Rebote en el borde inferior
-    if (bubble.y + bubble.radius > this.canvas.height) {
-      bubble.y = this.canvas.height - bubble.radius;
-      bubble.vy = Math.max(Math.abs(bubble.vy * bounceFactor), minVelocity) * Math.sign(bounceFactor);
-      bubble.vx += (Math.random() - 0.5) * 0.5;
-    }
-    
-    // Rebote en el borde superior
-    if (bubble.y - bubble.radius < 0) {
-      bubble.y = bubble.radius;
-      bubble.vy = Math.max(Math.abs(bubble.vy * bounceFactor), minVelocity) * Math.sign(-bounceFactor);
-      bubble.vx += (Math.random() - 0.5) * 0.5;
+  
+  // Alternar selección de una burbuja
+  toggleSelection(bubble) {
+    if (this.options.selectionMode === 'single') {
+      // En modo single, desseleccionar todas excepto la actual
+      this.bubbles.forEach(b => {
+        b.selected = (b === bubble);
+      });
+      
+      // Emitir evento con solo esta burbuja seleccionada
+      const selections = bubble.selected ? { [bubble.id]: bubble.value } : {};
+      this.emitSelectionChangedEvent(selections);
+    } else {
+      // En modo múltiple, alternar esta burbuja y modificar nivel de selección
+      if (!bubble.selected) {
+        bubble.selected = true;
+        bubble.selectionLevel = 0.25; // 1/4
+      } else {
+        bubble.selectionLevel += 0.25; // Aumentar en 1/4
+        if (bubble.selectionLevel > 1) {
+          bubble.selectionLevel = 0;
+          bubble.selected = false;
+        }
+      }
+      
+      // Compilar todas las selecciones actuales
+      const selections = {};
+      this.bubbles.forEach(b => {
+        if (b.selected) {
+          selections[b.id] = b.value * b.selectionLevel * 4; // Normalizar a 0-1
+        }
+      });
+      
+      this.emitSelectionChangedEvent(selections);
     }
   }
   
-  /**
-   * Dibuja las burbujas en el canvas
-   */
-  _render() {
-    // Limpiar el canvas
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  // Resto del código igual...
+  
+  // Dibujar todas las burbujas
+  draw() {
+    // Limpiar canvas con el color de fondo
+    this.ctx.fillStyle = this.options.canvasBackground;
+    this.ctx.fillRect(0, 0, this.options.width, this.options.height);
     
     // Dibujar cada burbuja
-    this.bubbles.forEach(bubble => {
-      this._drawBubble(bubble);
-    });
-  }
-    /**
-   * Dibuja una burbuja individual
-   */
-  _drawBubble(bubble) {
-    this.ctx.save();
-    
-    // Dibujar círculo
-    this.ctx.beginPath();
-    this.ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
-    
-    // Color de relleno gris para todas las burbujas
-    let fillColor = bubble.color;
-    
-    // Modificar color según el nivel de selección
-    if (bubble.selected > 0) {
-      // Aumentar brillo según nivel de selección
-      fillColor = this._adjustBrightness(bubble.color, 0.15 * bubble.selected);
+    for (const bubble of this.bubbles) {
+      this.drawBubble(bubble);
     }
+  }
+  
+  // Método mejorado para dibujar las burbujas con diseño moderno y elegante
+  drawBubble(bubble) {
+    const ctx = this.ctx;
     
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fill();
+    // Determinar colores base según estado
+    const baseColor = this.options.bubbleBaseColor || '#f97316';
+    const selectedColor = this.options.bubbleSelectedColor || '#ea580c';
     
-    // Borde naranja para todas las burbujas
-    if (bubble.selected > 0) {
-      this.ctx.strokeStyle = '#FFC107'; // Amarillo para seleccionados
-      this.ctx.lineWidth = 3;
+    // Calcular tamaño según estado (seleccionado/hover)
+    const normalRadius = bubble.radius;
+    const hoverScale = bubble.hovered ? 1.05 : 1.0;
+    const selectionScale = bubble.selected ? (1.0 + bubble.selectionLevel * 0.1) : 1.0;
+    const finalRadius = normalRadius * hoverScale * selectionScale;
+    
+    // Determinar colores
+    let fillColor;
+    if (bubble.selected) {
+      // Color para estado seleccionado - más intenso según nivel
+      const intensity = 0.7 + (bubble.selectionLevel * 0.3);
+      const r = Math.min(255, Math.round(parseInt(selectedColor.substr(1, 2), 16) * intensity));
+      const g = Math.min(255, Math.round(parseInt(selectedColor.substr(3, 2), 16) * intensity));
+      const b = Math.min(255, Math.round(parseInt(selectedColor.substr(5, 2), 16) * intensity));
+      fillColor = `rgb(${r}, ${g}, ${b})`;
     } else {
-      this.ctx.strokeStyle = '#f97316'; // Naranja para no seleccionados
-      this.ctx.lineWidth = 2;
+      // Color para estado normal
+      fillColor = bubble.hovered ? selectedColor : baseColor;
     }
-    this.ctx.stroke();
     
-    // Texto
-    this.ctx.fillStyle = this.options.textColor;
-    this.ctx.font = this.options.textFont;
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
+    // Dibujar círculo principal
+    ctx.beginPath();
+    ctx.arc(bubble.x, bubble.y, finalRadius, 0, Math.PI * 2);
     
-    // Sombra para mejor legibilidad
-    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-    this.ctx.shadowBlur = 4;
-    this.ctx.shadowOffsetX = 1;
-    this.ctx.shadowOffsetY = 1;
+    // Relleno con gradiente sutil
+    const gradient = ctx.createLinearGradient(
+      bubble.x, bubble.y - finalRadius, 
+      bubble.x, bubble.y + finalRadius
+    );
     
-    this.ctx.fillText(bubble.text, bubble.x, bubble.y);
-    this.ctx.restore();
-  }
-  
-  /**
-   * Ajusta el tamaño del canvas al contenedor
-   */
-  _resizeCanvas() {
-    const rect = this.container.getBoundingClientRect();
-    this.canvas.width = rect.width;
-    this.canvas.height = rect.height;
-  }
-    /**
-   * Reposiciona las burbujas al cambiar el tamaño
-   */
-  _repositionBubbles() {
-    if (this.bubbles.length === 0) return;
-    
-    // Calcular factor de escala
-    const gridSize = Math.ceil(Math.sqrt(this.bubbles.length));
-    const cellWidth = this.canvas.width / gridSize;
-    const cellHeight = this.canvas.height / gridSize;
-    
-    // Calcular radio máximo efectivo (incluyendo padding)
-    const maxRadiusWithPadding = Math.max(...this.bubbles.map(b => b.radius)) + this.options.padding;
-    
-    // Reposicionar burbujas
-    this.bubbles.forEach((bubble, idx) => {
-      const row = Math.floor(idx / gridSize);
-      const col = idx % gridSize;
-      
-      // Calcular el centro de la celda
-      const cellCenterX = (col + 0.5) * cellWidth;
-      const cellCenterY = (row + 0.5) * cellHeight;
-      
-      // Aplicar variación más controlada para evitar solapamientos
-      const variationFactor = 0.25; // Factor de variación reducido
-      
-      // Nueva posición
-      bubble.x = cellCenterX + (Math.random() * 2 - 1) * variationFactor * (cellWidth / 2 - maxRadiusWithPadding);
-      bubble.y = cellCenterY + (Math.random() * 2 - 1) * variationFactor * (cellHeight / 2 - maxRadiusWithPadding);
-      
-      // Resetear velocidades
-      bubble.vx = (Math.random() * 2 - 1) * 0.5;
-      bubble.vy = (Math.random() * 2 - 1) * 0.5;
-    });
-  }
-    /**
-   * Manejo de eventos del ratón
-   */
-  _handleMouseDown(e) {
-    this.mouse.pressed = true;
-    const mousePos = this._getMousePos(e);
-    this.mouse.x = mousePos.x;
-    this.mouse.y = mousePos.y;
-    
-    // Guardar el tiempo de inicio del clic para diferenciar clics de arrastres
-    this.clickStartTime = Date.now();
-    this.clickStartPos = { x: mousePos.x, y: mousePos.y };
-    
-    // Buscar si hay una burbuja en esta posición
-    const clickedBubble = this._findBubbleAtPosition(mousePos.x, mousePos.y);
-    
-    if (clickedBubble) {
-      // Guardar la burbuja que potencialmente se arrastrará
-      this.draggedBubble = clickedBubble;
-      // Guardar la posición inicial de la burbuja
-      this.draggedBubble.startX = this.draggedBubble.x;
-      this.draggedBubble.startY = this.draggedBubble.y;
+    // Colores de gradiente más sutiles
+    if (bubble.selected) {
+      gradient.addColorStop(0, fillColor);
+      gradient.addColorStop(1, this.adjustColor(fillColor, -15)); // Ligeramente más oscuro abajo
+    } else {
+      gradient.addColorStop(0, this.adjustColor(fillColor, 10)); // Ligeramente más claro arriba
+      gradient.addColorStop(1, fillColor);
     }
-  }
-  
-  _handleTouchStart(e) {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
-      const touchPos = this._getTouchPos(touch);
-      this._handleMouseDown({
-        clientX: touchPos.x,
-        clientY: touchPos.y
-      });
-    }
-  }
-    _handleMouseMove(e) {
-    const mousePos = this._getMousePos(e);
-    this.mouse.x = mousePos.x;
-    this.mouse.y = mousePos.y;
     
-    // Si hay una burbuja seleccionada para arrastrar y el mouse está presionado
-    if (this.mouse.pressed && this.draggedBubble) {
-      // Calcular la distancia que se ha movido desde el inicio del clic
-      const dx = mousePos.x - this.clickStartPos.x;
-      const dy = mousePos.y - this.clickStartPos.y;
-      const moveDistance = Math.sqrt(dx * dx + dy * dy);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    // Borde más elegante
+    ctx.strokeStyle = bubble.selected ? 
+                    "rgba(255, 255, 255, 0.5)" : 
+                    "rgba(255, 255, 255, 0.2)";
+    ctx.lineWidth = bubble.selected ? 1.5 : 0.5;
+    ctx.stroke();
+    
+    // Texto con mejor legibilidad
+    const fontSize = Math.max(12, Math.min(16, finalRadius * 0.45 * this.options.textScaleFactor));
+    ctx.font = `${bubble.selected ? 'bold' : ''} ${fontSize}px "Segoe UI", -apple-system, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    // Texto con sombra sutil para mejor legibilidad
+    ctx.fillStyle = this.options.textColor || "#ffffff";
+    
+    // Sombra muy sutil solo si es necesaria para legibilidad
+    if (this.getBrightness(fillColor) > 150) { // Color claro necesita sombra para legibilidad
+      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 1;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+    
+    ctx.fillText(bubble.label, bubble.x, bubble.y);
+    ctx.shadowBlur = 0;
+    
+    // Indicador de nivel de selección - minimalista
+    if (bubble.selected && bubble.selectionLevel > 0) {
+      const levels = 4; // 4 niveles posibles
+      const activeLevel = Math.ceil(bubble.selectionLevel * levels);
+      const indicatorSize = 3;
+      const spacing = 6;
+      const totalWidth = (levels * indicatorSize) + ((levels-1) * spacing);
+      const startX = bubble.x - totalWidth/2 + indicatorSize/2;
+      const y = bubble.y + finalRadius * 0.7;
       
-      // Si se ha movido más del umbral, consideramos que es un arrastre
-      if (moveDistance > this.dragThreshold) {
-        // Actualizar la posición de la burbuja arrastrada directamente
-        this.draggedBubble.x = this.draggedBubble.startX + dx;
-        this.draggedBubble.y = this.draggedBubble.startY + dy;
+      for (let i = 0; i < levels; i++) {
+        ctx.beginPath();
+        const x = startX + (i * (indicatorSize + spacing));
+        ctx.rect(x - indicatorSize/2, y - indicatorSize/2, indicatorSize, indicatorSize);
         
-        // Reiniciar velocidades durante el arrastre
-        this.draggedBubble.vx = 0;
-        this.draggedBubble.vy = 0;
+        if (i < activeLevel) {
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        } else {
+          ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        }
+        ctx.fill();
       }
     }
   }
   
-  _handleTouchMove(e) {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
-      const touchPos = this._getTouchPos(touch);
-      this._handleMouseMove({
-        clientX: touchPos.x,
-        clientY: touchPos.y
-      });
-    }
-  }
-    _handleMouseUp() {
-    // Si hay una burbuja arrastrada
-    if (this.draggedBubble) {
-      // Verificar si fue un clic (evento rápido) o un arrastre
-      const clickDuration = Date.now() - this.clickStartTime;
-      const dx = this.mouse.x - this.clickStartPos.x;
-      const dy = this.mouse.y - this.clickStartPos.y;
-      const moveDistance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Si fue un clic (corto y sin movimiento significativo)
-      if (clickDuration < 300 && moveDistance < this.dragThreshold) {
-        this._toggleBubbleSelection(this.draggedBubble);
-      } 
-      // Si fue un arrastre, dar un pequeño impulso en la dirección del movimiento
-      else if (moveDistance >= this.dragThreshold) {
-        // Dar un pequeño impulso en la dirección del movimiento
-        this.draggedBubble.vx = dx * 0.1;
-        this.draggedBubble.vy = dy * 0.1;
-      }
-      
-      // Liberar la burbuja arrastrada
-      this.draggedBubble = null;
-    }
+  // Función auxiliar para ajustar el brillo de un color
+  adjustColor(color, amount) {
+    // Extraer componentes RGB
+    let r, g, b;
     
-    this.mouse.pressed = false;
-  }
-  
-  /**
-   * Obtiene la posición del ratón relativa al canvas
-   */
-  _getMousePos(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
-      y: (e.clientY - rect.top) * (this.canvas.height / rect.height)
-    };
-  }
-  
-  /**
-   * Obtiene la posición de un toque táctil relativa al canvas
-   */
-  _getTouchPos(touch) {
-    const rect = this.canvas.getBoundingClientRect();
-    return {
-      x: (touch.clientX - rect.left) * (this.canvas.width / rect.width),
-      y: (touch.clientY - rect.top) * (this.canvas.height / rect.height)
-    };
-  }
-  
-  /**
-   * Busca una burbuja en una posición específica
-   */
-  _findBubbleAtPosition(x, y) {
-    // Buscar de atrás hacia adelante para que las burbujas delanteras tengan prioridad
-    for (let i = this.bubbles.length - 1; i >= 0; i--) {
-      const bubble = this.bubbles[i];
-      const dx = bubble.x - x;
-      const dy = bubble.y - y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance <= bubble.radius) {
-        return bubble;
-      }
-    }
-    return null;
-  }
-  
-  /**
-   * Alterna la selección de una burbuja
-   */
-  _toggleBubbleSelection(bubble) {
-    // Incrementar el nivel de selección (0-4, cíclico)
-    bubble.selected = (bubble.selected + 1) % (this.options.selectionLevels + 1);
-    
-    // Ajustar tamaño según selección
-    const scaleFactor = 1.0 + (bubble.selected * 0.1);
-    bubble.radius = bubble.originalRadius * scaleFactor;
-    
-    // Guardar selección en el objeto
-    if (bubble.selected > 0) {
-      this.selectedBubbles[bubble.text] = bubble.selected;
+    if (color.startsWith('#')) {
+      r = parseInt(color.substr(1, 2), 16);
+      g = parseInt(color.substr(3, 2), 16);
+      b = parseInt(color.substr(5, 2), 16);
     } else {
-      delete this.selectedBubbles[bubble.text];
+      // Intentar con formato rgb
+      const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (match) {
+        r = parseInt(match[1]);
+        g = parseInt(match[2]);
+        b = parseInt(match[3]);
+      } else {
+        return color; // No se pudo analizar el color
+      }
     }
     
-    // Notificar el cambio
-    this._notifySelectionChanged();
+    // Ajustar componentes
+    r = Math.max(0, Math.min(255, r + amount));
+    g = Math.max(0, Math.min(255, g + amount));
+    b = Math.max(0, Math.min(255, b + amount));
     
-    // Aplicar un pequeño impulso
-    bubble.vx += (Math.random() - 0.5) * 3;
-    bubble.vy += (Math.random() - 0.5) * 3;
+    return `rgb(${r}, ${g}, ${b})`;
   }
   
-  /**
-   * Notifica cambios en la selección
-   */
-  _notifySelectionChanged() {
-    // Crear evento personalizado
+  // Función para calcular el brillo de un color (0-255)
+  getBrightness(color) {
+    // Extraer componentes RGB
+    let r, g, b;
+    
+    if (color.startsWith('#')) {
+      r = parseInt(color.substr(1, 2), 16);
+      g = parseInt(color.substr(3, 2), 16);
+      b = parseInt(color.substr(5, 2), 16);
+    } else {
+      // Intentar con formato rgb
+      const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (match) {
+        r = parseInt(match[1]);
+        g = parseInt(match[2]);
+        b = parseInt(match[3]);
+      } else {
+        return 128; // Valor por defecto si no se puede analizar
+      }
+    }
+    
+    // Fórmula estándar para calcular brillo perceptivo
+    return (r * 299 + g * 587 + b * 114) / 1000;
+  }
+  
+  // Bucle de animación principal
+  animate() {
+    this.update();
+    this.draw();
+    requestAnimationFrame(() => this.animate());
+  }
+
+  // Emitir evento de cambio de selección
+  emitSelectionChangedEvent(selections) {
     const event = new CustomEvent('selection-changed', {
-      detail: {
-        selections: { ...this.selectedBubbles }
-      }
+      detail: { selections: selections }
     });
-    
-    // Disparar evento en el contenedor
-    this.container.dispatchEvent(event);
-    
-    console.log('Selección actualizada:', this.selectedBubbles);
+    this.canvas.dispatchEvent(event);
   }
   
-  /**
-   * Aplica un impulso aleatorio a todas las burbujas
-   */  _applyRandomImpulse(strength = 1.0) {
-    this.bubbles.forEach(bubble => {
-      // Aplicar impulsos más fuertes 
-      bubble.vx += (Math.random() * 2 - 1) * 5 * strength;
-      bubble.vy += (Math.random() * 2 - 1) * 5 * strength;
-      
-      // Asegurar que la velocidad total tiene un mínimo para mantener el movimiento interesante
-      const speed = Math.sqrt(bubble.vx * bubble.vx + bubble.vy * bubble.vy);
-      if (speed < 2.0 * strength) {
-        const scaleFactor = 2.0 * strength / Math.max(0.1, speed);
-        bubble.vx *= scaleFactor;
-        bubble.vy *= scaleFactor;
-      }
-    });
-  }
-  
-  /**
-   * Ajusta el brillo de un color hexadecimal
-   */
-  _adjustBrightness(hex, factor) {
-    // Convertir hex a RGB
-    let r = parseInt(hex.substring(1, 3), 16);
-    let g = parseInt(hex.substring(3, 5), 16);
-    let b = parseInt(hex.substring(5, 7), 16);
-    
-    // Aumentar valores RGB
-    r = Math.min(255, Math.round(r * (1 + factor)));
-    g = Math.min(255, Math.round(g * (1 + factor)));
-    b = Math.min(255, Math.round(b * (1 + factor)));
-    
-    // Convertir de vuelta a hex
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
-  
-  // ===== MÉTODOS PÚBLICOS =====
-  
-  /**
-   * Obtiene las selecciones actuales
-   */
+  // Obtener selecciones actuales
   getSelections() {
-    return { ...this.selectedBubbles };
-  }
-  
-  /**
-   * Restablece las selecciones
-   */
-  resetSelections() {
-    this.selectedBubbles = {};
+    const selections = {};
     this.bubbles.forEach(bubble => {
-      bubble.selected = 0;
-      bubble.radius = bubble.originalRadius;
-    });
-    this._notifySelectionChanged();
-  }
-  
-  /**
-   * Establece selecciones específicas
-   */
-  setSelections(selections = {}) {
-    this.resetSelections();
-    
-    this.bubbles.forEach(bubble => {
-      if (selections[bubble.text]) {
-        bubble.selected = selections[bubble.text];
-        
-        // Ajustar tamaño según selección
-        const scaleFactor = 1.0 + (bubble.selected * 0.1);
-        bubble.radius = bubble.originalRadius * scaleFactor;
-        
-        // Guardar en selecciones
-        this.selectedBubbles[bubble.text] = bubble.selected;
+      if (bubble.selected) {
+        selections[bubble.id] = bubble.value * bubble.selectionLevel * 4; // Normalizar a 0-1
       }
     });
-    
-    this._notifySelectionChanged();
+    return selections;
   }
   
-  /**
-   * Aplica un impulso aleatorio a todas las burbujas (método público)
-   */
-  applyImpulse(strength = 1.0) {
-    this._applyRandomImpulse(strength);
+  // Actualizar selecciones desde fuente externa
+  updateSelections(selections) {
+    if (!selections) return;
+    
+    // Resetear todas las burbujas primero
+    this.bubbles.forEach(bubble => {
+      bubble.selected = false;
+      bubble.selectionLevel = 0;
+    });
+    
+    // Aplicar las selecciones proporcionadas
+    for (const id in selections) {
+      const selectionValue = selections[id];
+      const bubble = this.bubbles.find(b => b.id === id);
+      
+      if (bubble) {
+        bubble.selected = true;
+        bubble.selectionLevel = selectionValue / bubble.value / 4; // Convertir a escala 0-1
+      }
+    }
+    
+    // Forzar redibujado
+    this.draw();
   }
-  /**
-   * Destructor: limpia eventos y detiene animaciones
-   */
-  destroy() {
-    try {
-      // Detener animación
-      if (this.animationId) {
-        cancelAnimationFrame(this.animationId);
-        this.animationId = null;
+  
+  // Actualizar posiciones y velocidades de las burbujas
+  update() {
+    for (let i = 0; i < this.bubbles.length; i++) {
+      const bubble = this.bubbles[i];
+      
+      // Saltar actualización si estamos arrastrando esta burbuja
+      if (this.isDragging && bubble === this.selectedBubble) continue;
+      
+      // Aplicar velocidad a la posición
+      bubble.x += bubble.vx;
+      bubble.y += bubble.vy;
+      
+      // Aplicar fricción para ralentizar
+      bubble.vx *= (1 - this.options.friction);
+      bubble.vy *= (1 - this.options.friction);
+      
+      // MEJORADO: Rebote en los bordes del canvas con mayor elasticidad
+      const restitution = 0.9; // Coeficiente de restitución (elasticidad del rebote)
+      
+      if (bubble.x - bubble.radius < 0) {
+        bubble.x = bubble.radius + 1; // Evitar que quede atrapada en el borde
+        bubble.vx = Math.abs(bubble.vx) * restitution;
+      } else if (bubble.x + bubble.radius > this.options.width) {
+        bubble.x = this.options.width - bubble.radius - 1;
+        bubble.vx = -Math.abs(bubble.vx) * restitution;
       }
       
-      // Limpiar referencias
-      this.bubbles = [];
-      this.selectedBubbles = {};
-      this.draggedBubble = null;
-      this.mouse = { x: 0, y: 0, pressed: false };
+      if (bubble.y - bubble.radius < 0) {
+        bubble.y = bubble.radius + 1;
+        bubble.vy = Math.abs(bubble.vy) * restitution;
+      } else if (bubble.y + bubble.radius > this.options.height) {
+        bubble.y = this.options.height - bubble.radius - 1;
+        bubble.vy = -Math.abs(bubble.vy) * restitution;
+      }
       
-      // Eliminar eventos si el canvas existe
-      if (this.canvas) {
-        // Asegurar que limpiamos todos los event listeners
-        if (this.canvas.parentNode) {
-          const newCanvas = this.canvas.cloneNode(false);
-          if (this.canvas.parentNode) {
-            this.canvas.parentNode.replaceChild(newCanvas, this.canvas);
+      // Aplicar una fuerza hacia el centro si está muy lejos
+      const centerX = this.options.width / 2;
+      const centerY = this.options.height / 2;
+      const dx = centerX - bubble.x;
+      const dy = centerY - bubble.y;
+      const distanceToCenter = Math.sqrt(dx*dx + dy*dy);
+      
+      if (distanceToCenter > this.options.width * 0.4) {
+        bubble.vx += (dx / distanceToCenter) * this.options.attraction;
+        bubble.vy += (dy / distanceToCenter) * this.options.attraction;
+      }
+      
+      // MEJORADO: Prevenir solapamiento entre burbujas con mejor física
+      for (let j = i + 1; j < this.bubbles.length; j++) {
+        const otherBubble = this.bubbles[j];
+        
+        // Saltar si estamos arrastrando la otra burbuja
+        if (this.isDragging && otherBubble === this.selectedBubble) continue;
+        
+        const dx = otherBubble.x - bubble.x;
+        const dy = otherBubble.y - bubble.y;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        const minDistance = bubble.radius + otherBubble.radius;
+        
+        // Si hay colisión, aplicar rebote con física mejorada
+        if (distance < minDistance) {
+          // Calcular la profundidad de la colisión
+          const angle = Math.atan2(dy, dx);
+          const overlap = minDistance - distance;
+          
+          // Calcular vectores unitarios de dirección
+          const nx = dx / distance;
+          const ny = dy / distance;
+          
+          // Factor de corrección para evitar solapamiento completo
+          const correctionFactor = 0.7; // Más alto = separación más fuerte
+          
+          // Mover las burbujas para evitar superposición con más fuerza
+          const moveX = nx * overlap * 0.5 * correctionFactor;
+          const moveY = ny * overlap * 0.5 * correctionFactor;
+          
+          if (!(this.isDragging && bubble === this.selectedBubble)) {
+            bubble.x -= moveX;
+            bubble.y -= moveY;
+          }
+          
+          if (!(this.isDragging && otherBubble === this.selectedBubble)) {
+            otherBubble.x += moveX;
+            otherBubble.y += moveY;
+          }
+          
+          // MEJORADO: Aplicar velocidad con conservación de momento e impulso
+          const bounceForce = 0.25; // Aumentado para más rebote
+          
+          // Aplicar impulso a ambas burbujas en direcciones opuestas
+          if (!(this.isDragging && bubble === this.selectedBubble)) {
+            bubble.vx -= nx * bounceForce;
+            bubble.vy -= ny * bounceForce;
+            
+            // Pequeña perturbación aleatoria para evitar burbujas "pegadas"
+            bubble.vx += (Math.random() - 0.5) * 0.05;
+            bubble.vy += (Math.random() - 0.5) * 0.05;
+          }
+          
+          if (!(this.isDragging && otherBubble === this.selectedBubble)) {
+            otherBubble.vx += nx * bounceForce;
+            otherBubble.vy += ny * bounceForce;
+            
+            // Pequeña perturbación aleatoria para evitar burbujas "pegadas"
+            otherBubble.vx += (Math.random() - 0.5) * 0.05;
+            otherBubble.vy += (Math.random() - 0.5) * 0.05;
           }
         }
-        
-        // Limpiar el canvas antes de eliminarlo
-        if (this.ctx) {
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          this.ctx = null;
-        }
-        
-        // Eliminar canvas del DOM si aún está presente
-        if (this.canvas.parentNode) {
-          this.canvas.parentNode.removeChild(this.canvas);
-        }
-        
-        this.canvas = null;
       }
+    }
+  }
+  
+  // Método para manejar redimensionamiento
+  handleResize() {
+    // Guardar selecciones actuales
+    const currentSelections = this.getSelections();
+    
+    // Obtener nuevas dimensiones del contenedor
+    if (this.canvas.parentElement) {
+      const rect = this.canvas.parentElement.getBoundingClientRect();
+      const newWidth = rect.width;
+      const newHeight = rect.height;
       
-      // Eliminar referencia al contenedor
-      this.container = null;
+      // No hacer nada si las dimensiones son muy pequeñas
+      if (newWidth < 50 || newHeight < 50) return;
       
-      console.log('MagneticBubbles destruido correctamente');
-      this.initialized = false;
-    } catch (error) {
-      console.error('Error al destruir MagneticBubbles:', error);
+      console.log(`Redimensionando canvas: ${this.options.width}x${this.options.height} -> ${newWidth}x${newHeight}`);
+      
+      // Ratios de cambio para mantener posiciones relativas
+      const ratioX = newWidth / this.options.width;
+      const ratioY = newHeight / this.options.height;
+      
+      // Actualizar dimensiones del canvas
+      this.canvas.style.width = `${newWidth}px`;
+      this.canvas.style.height = `${newHeight}px`;
+      
+      // Calcular nuevo tamaño con pixel ratio para alta resolución
+      const pixelRatio = window.devicePixelRatio || 1;
+      this.canvas.width = newWidth * pixelRatio;
+      this.canvas.height = newHeight * pixelRatio;
+      
+      // Actualizar opciones
+      this.options.width = newWidth;
+      this.options.height = newHeight;
+      
+      // Escalar contexto para mantener calidad
+      this.ctx.scale(pixelRatio, pixelRatio);
+      
+      // Reposicionar burbujas
+      this.bubbles.forEach(bubble => {
+        bubble.x *= ratioX;
+        bubble.y *= ratioY;
+        
+        // Recalcular tamaño de las burbujas
+        const minDimension = Math.min(newWidth, newHeight);
+        const numItems = this.bubbles.length;
+        const sizeFactor = this.options.bubbleSizeFactor * (1 - (numItems > 8 ? 0.1 * (numItems-8)/8 : 0));
+        bubble.radius = minDimension * sizeFactor;
+        bubble.originalRadius = bubble.radius;
+      });
+      
+      // Restaurar selecciones
+      this.updateSelections(currentSelections);
     }
   }
 }
 
-// Exportar al contexto global para usarlo desde HTML
+// Exponer globalmente
 window.MagneticBubbles = MagneticBubbles;
 
-// Confirmar disponibilidad
-console.log('MagneticBubbles está disponible en el contexto global:', !!window.MagneticBubbles);
+// Añadir detector de redimensionamiento de ventana para todas las instancias
+window.addEventListener('resize', function() {
+  if (window.estilosBubbles && typeof window.estilosBubbles.handleResize === 'function') {
+    window.estilosBubbles.handleResize();
+  }
+  if (window.marcasBubbles && typeof window.marcasBubbles.handleResize === 'function') {
+    window.marcasBubbles.handleResize();
+  }
+});
 
-// Notificar cuando el script haya terminado de cargarse
-document.dispatchEvent(new CustomEvent('magnetic-bubbles-loaded'));
+console.log("MagneticBubbles cargado correctamente. Clase disponible globalmente.");

@@ -1,0 +1,109 @@
+/* Friend recommendations styles */
+.friend-recommendation-flash {
+    background-color: rgba(20, 20, 20, 0.9);
+    border: 1px solid #f97316;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 15px 0;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.friend-recommendation-flash h3 {
+    color: #f97316;
+    margin-top: 0;
+    font-size: 18px;
+    border-bottom: 1px solid rgba(249, 115, 22, 0.3);
+    padding-bottom: 8px;
+}
+
+.friend-recommendation-flash h4 {
+    color: #f0f0f0;
+    margin: 12px 0 5px 0;
+    font-size: 16px;
+}
+
+.friend-recommendations {
+    font-size: 14px;
+}
+
+.ideal-moto-rec, .liked-motos-rec {
+    background-color: rgba(50, 50, 50, 0.5);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.reasons, .liked-list {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 5px 0;
+    font-size: 13px;
+    color: #ccc;
+    border-left: 2px solid #f97316;
+}
+
+.reasons li, .liked-list li {
+    margin: 3px 0;
+}
+
+.view-more {
+    display: inline-block;
+    margin-top: 10px;
+    color: #f97316;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.view-more:hover {
+    color: #ff8c42;
+    text-decoration: underline;
+}
+
+/* Notificación animada */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.friend-recommendation-flash {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Estilos para recomendaciones de propagación de etiquetas */
+.label-prop-rec {
+    background-color: rgba(50, 50, 50, 0.5);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 2px solid #5af132;  /* Verde para distinguir de otras recomendaciones */
+}
+
+.label-prop-rec h4 {
+    color: #5af132;
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.recommendations-list {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 5px 0;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.recommendations-list li {
+    margin: 3px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.recommendations-list li::before {
+    content: "★";
+    color: #5af132;
+    margin-right: 8px;
+    font-size: 12px;
+}

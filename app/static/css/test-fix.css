@@ -1,0 +1,51 @@
+/* 
+   Este CSS se agrega para resolver el problema de visualización de preguntas 
+   y asegurar que cada pregunta solo se muestra cuando está activa
+*/
+
+/* Regla muy específica para asegurar que no se muestren preguntas inactivas */
+.test-container .pregunta:not(.active) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    z-index: -10 !important;
+}
+
+/* Asegurar que solo la pregunta activa se muestre */
+.test-container .pregunta.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    left: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    pointer-events: all !important;
+    z-index: 10 !important;
+}
+
+/* Ocultar específicamente preguntas anteriores cuando otra está activa */
+.test-container .pregunta.active ~ .pregunta {
+    display: none !important;
+}
+
+/* Mejorar el flujo visual organizando las preguntas */
+.test-container {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Asegurar que las preguntas aparezcan en orden */
+#pregunta-1 { order: 1; }
+#pregunta-2 { order: 2; }
+#pregunta-4 { order: 3; }
+#pregunta-5 { order: 4; }
+#pregunta-6 { order: 5; }
+#pregunta-7 { order: 6; }
+#pregunta-8 { order: 7; }
+#pregunta-uso-principal { order: 8; }

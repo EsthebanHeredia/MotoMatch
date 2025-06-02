@@ -1,0 +1,125 @@
+/* Estilos para el selector de contadores */
+.counter-selector-container {
+  width: 100%;
+  background: linear-gradient(to bottom, rgba(30, 30, 32, 0.95), rgba(24, 24, 26, 0.95));
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.counter-items-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.counter-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.counter-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.counter-item-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.counter-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counter-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f97316;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.counter-btn:hover:not(:disabled) {
+  background: #ea580c;
+  transform: scale(1.05);
+}
+
+.counter-btn:disabled {
+  background: #666;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.counter-value {
+  width: 24px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+}
+
+/* Estilos para valores seleccionados */
+.counter-item[data-level="1"] {
+  background: rgba(249, 115, 22, 0.2);
+}
+
+.counter-item[data-level="2"] {
+  background: rgba(249, 115, 22, 0.35);
+}
+
+.counter-item[data-level="3"] {
+  background: rgba(249, 115, 22, 0.5);
+}
+
+.counter-item[data-level="4"] {
+  background: rgba(249, 115, 22, 0.65);
+}
+
+/* Mensaje de error */
+.error-message {
+  color: #fff;
+  background: rgba(220, 38, 38, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.error-message button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #f97316;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .counter-items-list {
+    grid-template-columns: 1fr;
+  }
+}

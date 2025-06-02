@@ -1,0 +1,263 @@
+.ideal-moto-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.ideal-moto-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.ideal-moto-header h2 {
+    color: hsl(var(--hue2), 70%, 70%);
+    font-size: 24px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ideal-moto-card {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    background: linear-gradient(235deg, hsl(var(--hue1) 30% 15% / 0.8), hsl(var(--hue1) 20% 10% / 0.5) 33%), 
+                linear-gradient(45deg, hsl(var(--hue2) 20% 10% / 0.8), hsl(var(--hue2) 20% 10% / 0.5) 33%), 
+                linear-gradient(hsl(220deg 10% 8% / 0.7));
+    border-radius: var(--radius);
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    margin-bottom: 30px;
+}
+
+@media (min-width: 768px) {
+    .ideal-moto-card {
+        flex-direction: row;
+    }
+}
+
+.ideal-moto-image {
+    flex: 0 0 100%; /* Full width on mobile */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsl(var(--hue1), 20%, 15%, 0.5);
+    padding: 15px;
+    border-radius: var(--radius);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+@media (min-width: 768px) {
+    .ideal-moto-image {
+        flex: 0 0 40%; /* 40% width on desktop */
+    }
+}
+
+.ideal-moto-image img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: calc(var(--radius) * 0.7);
+}
+
+.ideal-moto-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ideal-moto-details h2 {
+    color: hsl(var(--hue2), 70%, 70%);
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.ideal-moto-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.spec-label {
+    font-weight: 600;
+    color: hsl(var(--hue1), 80%, 80%);
+    flex: 0 0 120px;
+}
+
+.spec-value {
+    color: white;
+    font-weight: 500;
+}
+
+.score-bar {
+    height: 6px;
+    background: linear-gradient(90deg, hsl(var(--hue2), 80%, 50%), hsl(var(--hue1), 70%, 60%));
+    border-radius: var(--radius);
+    margin-top: 5px;
+    margin-left: 130px;
+    transition: width 1s var(--ease);
+}
+
+.ideal-moto-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: auto;
+}
+
+.ideal-moto-actions .btn {
+    flex: 1 0 auto;
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-main);
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 130px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: hsl(var(--hue2), 60%, 40%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: hsl(var(--hue2), 70%, 45%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+    background: hsl(var(--hue1), 40%, 30%);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: hsl(var(--hue1), 50%, 35%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-highlight {
+    background: hsl(0, 70%, 40%);
+    color: white;
+}
+
+.btn-highlight:hover, .btn-highlight.liked {
+    background: hsl(0, 80%, 45%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.like-count {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+.ideal-moto-description {
+    background: hsl(var(--hue1), 30%, 15%, 0.5);
+    border-radius: var(--radius);
+    padding: 25px;
+    margin-top: 20px;
+}
+
+.ideal-moto-description h3 {
+    color: hsl(var(--hue2), 70%, 70%);
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.ideal-moto-description p, .ideal-moto-description ul {
+    color: hsl(var(--hue1), 20%, 90%);
+    line-height: 1.6;
+}
+
+.ideal-moto-description ul {
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.ideal-moto-description li {
+    margin-bottom: 8px;
+}
+
+.no-ideal-moto {
+    text-align: center;
+    padding: 50px;
+    background: hsl(var(--hue1), 30%, 15%, 0.5);
+    border-radius: var(--radius);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.icon-container {
+    font-size: 50px;
+    color: hsl(var(--hue2), 60%, 60%, 0.7);
+    margin-bottom: 20px;
+}
+
+.no-ideal-moto h2 {
+    color: hsl(var(--hue2), 70%, 70%);
+    margin-bottom: 20px;
+}
+
+.no-ideal-moto p {
+    color: hsl(var(--hue1), 20%, 90%);
+    margin-bottom: 30px;
+}
+
+.no-ideal-moto .btn {
+    display: inline-block;
+    margin: 10px;
+}
+
+.notification {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 15px;
+    background: hsl(var(--hue1), 30%, 15%, 0.9);
+    border-left: 4px solid hsl(var(--hue2), 70%, 50%);
+    border-radius: var(--radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left-color: hsl(120, 70%, 40%);
+}
+
+.notification.error {
+    border-left-color: hsl(0, 70%, 50%);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-weight: 500;
+}

@@ -774,17 +774,74 @@ body {
     transform: translateX(100%);
 }
 
-/* Contenedor de tarjetas */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Exactamente 2 columnas */
-    gap: 25px;
-    padding: 20px 0;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    justify-content: center;
-    margin-bottom: 20px;
+/* Corrección para el botón de Dashboard */
+.navbar-brand, .btn-back, .navbar .btn, .navbar a {
+  font-size: 16px !important; /* Tamaño de fuente fijo */
+  padding: 8px 15px !important; /* Padding consistente */
+  max-height: 45px !important; /* Altura máxima */
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1.5 !important;
+}
+
+.navbar {
+  min-height: 50px !important;
+  max-height: 60px !important;
+}
+
+/* Corrección específica para el botón Regresar al Dashboard */
+a[href="/dashboard"], a[href="/dashboard"] button {
+  font-size: 14px !important;
+  padding: 6px 12px !important;
+  max-height: 40px !important;
+  max-width: 200px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Asegurar que los contenedores de canvas tengan altura mínima */
+.canvas-container, .bubble-canvas-container {
+  min-height: 300px !important;
+  min-width: 300px !important;
+  position: relative !important;
+}
+
+/* Mejoras para los contenedores de canvas - versión elegante y moderna */
+.circle-canvas {
+  min-height: 400px !important;
+  height: 50vh !important;
+  width: 100% !important;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  position: relative !important;
+  overflow: hidden;
+  /* Fondo más limpio y elegante */
+  background: linear-gradient(to bottom, rgba(30, 30, 32, 0.95), rgba(24, 24, 26, 0.95));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  pointer-events: auto !important; /* CRUCIAL: Permitir eventos */
+  touch-action: none; /* CRUCIAL: Para eventos táctiles */
+}
+
+/* IMPORTANTE: Asegurar que el canvas reciba eventos de clic */
+.circle-canvas canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  pointer-events: auto !important; /* CRUCIAL: Permite interacción */
+  touch-action: none !important;
+  z-index: 10 !important;
+  transition: opacity 0.3s ease;
+}
+
+/* Asegurar que cualquier elemento dentro del canvas no bloquee eventos */
+.circle-canvas * {
+  pointer-events: auto !important;
 }
 
 /* Tarjetas de moto con estilo NeonGlass */
@@ -806,164 +863,8 @@ body {
     height: 100%;
     justify-content: space-between;
     transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
-}
-
-/* Efecto de resplandor superior para las tarjetas */
-.moto-card::before {
-    content: "";
-    position: absolute;
-    top: -2px;
-    left: 20%;
-    right: 20%;
-    height: 2px;
-    background: linear-gradient(90deg, 
-                transparent, 
-                hsl(var(--hue1), 90%, 60%), 
-                transparent);
-    border-radius: var(--radius);
-    opacity: 0.7;
-    filter: blur(1px);
-    transition: all 0.5s var(--ease);
-}
-
-/* Efecto de resplandor lateral para las tarjetas */
-.moto-card::after {
-    content: "";
-    position: absolute;
-    top: 20%;
-    bottom: 20%;
-    right: -2px;
-    width: 2px;
-    background: linear-gradient(180deg, 
-                transparent, 
-                hsl(var(--hue2), 90%, 60%), 
-                transparent);
-    border-radius: var(--radius);
-    opacity: 0.7;
-    filter: blur(1px);
-    transition: all 0.5s var(--ease);
-}
-
-.moto-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3),
-                0 0 15px hsl(var(--hue1), 90%, 40%, 0.5);
-    transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
-}
-
-.moto-card:hover::before,
-.moto-card:hover::after {
-    opacity: 1;
-    filter: blur(2px);
-}
-
-.moto-card h3 {
-    margin-top: 0;
-    font-size: 24px;
-    color: hsl(var(--hue1), 90%, 80%);
-    text-shadow: 0 0 5px hsl(var(--hue1), 90%, 40%);
-}
-
-.moto-card p {
-    margin: 5px 0;
-    font-weight: 300;
-}
-
-.moto-card p strong {
-    color: hsl(var(--hue2), 80%, 80%);
-}
-
-/* Sección de likes */
-.like-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid hsl(var(--hue1), 30%, 30%, 0.3);
-}
-
-.like-button {
-    background: linear-gradient(90deg, hsl(var(--hue1), 90%, 30%), hsl(var(--hue2), 90%, 30%));
-    color: rgb(255, 255, 255);
-    border: none;
-    padding: 10px 15px;
-    border-radius: calc(var(--radius) * 0.6);
-    cursor: pointer;
-    font-size: 16px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 5px hsl(var(--hue1), 90%, 40%, 0.5);
-    transition: all 0.3s var(--ease);
-}
-
-.like-button::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, 
-                transparent, 
-                hsl(var(--hue1), 100%, 70%, 0.2), 
-                transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s var(--ease);
-}
-
-.like-button:hover {
-    box-shadow: 0 0 10px hsl(var(--hue1), 90%, 50%),
-                0 0 20px hsl(var(--hue1), 90%, 40%, 0.5);
-}
-
-.like-button:hover::before {
-    transform: translateX(100%);
-}
-
-/* Animación para efectos de brillo */
-@keyframes glow {
-    0% {
-        opacity: 0;
-    }
-    3% {
-        opacity: 1;
-    }
-    10% {
-        opacity: 0;
-    }
-    12% {
-        opacity: 0.7;
-    }
-    16% {
-        opacity: 0.3;
-        animation-timing-function: var(--ease);
-    }
-    100% {
-        opacity: 1;
-        animation-timing-function: var(--ease);
-    }
-}
-
-.like-btn {
-    background-color: #ff6600; /* naranja base */
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 15px;
-    transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
-}
-
-.like-btn:hover {
-    background-color: #e65c00; /* naranja más oscuro */
-    box-shadow: 0 0 10px #ff6600;
-}
-
-.like-btn:disabled {
-    background-color: #ff6600;
-    cursor: default;
-    opacity: 0.7;
+    transition: transform 0.5s ease, box-shadow 0.5s ease, opacity 0.5s ease;
+    opacity: 0; /* Iniciar con opacidad 0 para animar entrada */
 }
 
 /* Estilos para las imágenes de las motos */
@@ -976,558 +877,503 @@ body {
     border: var(--border) solid hsl(var(--hue1), 30%, 30%, 0.5); /* Borde consistente con el tema */
     box-shadow: 0 0 8px hsl(var(--hue1), 80%, 40%, 0.3); /* Sombra sutil */
     transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+    max-height: 180px; /* Limitar altura máxima */
+    max-width: 100%; /* Asegurar que no exceda el ancho del contenedor */
 }
 
-/* Efecto hover para las imágenes */
-.moto-img:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 12px hsl(var(--hue1), 80%, 50%, 0.5);
-}
-
-/* Footer fijo pero sin bloquear contenido */
-footer {
-    text-align: center;
+/* Contenedor de recomendaciones - asegurar que la cuadrícula se muestre correctamente */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
     width: 100%;
-    padding: 15px 0;
-    background: linear-gradient(235deg, hsl(var(--hue1) 50% 10% / 0.8), hsl(var(--hue1) 50% 10% / 0) 33%);
+    max-width: 1200px;
+    margin: 0 auto;
+    justify-content: center;
+    margin-bottom: 20px;
+    opacity: 1; /* Asegurar que siempre sea visible */
+    transition: opacity 0.5s ease; /* Transición suave */
+}
+
+/* Animación de entrada para las tarjetas de motos */
+.moto-card {
+    background: linear-gradient(235deg, hsl(var(--hue1) 30% 15% / 0.8), hsl(var(--hue1) 20% 10% / 0.5) 33%), 
+                linear-gradient(45deg, hsl(var(--hue2) 20% 10% / 0.8), hsl(var(--hue2) 20% 10% / 0.5) 33%), 
+                linear-gradient(hsl(220deg 10% 8% / 0.7));
     backdrop-filter: blur(8px);
-    position: sticky; /* Cambiado a sticky para que se mantenga abajo */
-    bottom: 0;
-    z-index: 10;
-    margin-top: auto; /* Mantiene el footer al final */
-    flex-shrink: 0; /* Evita que el footer se encoja */
-}
-
-footer a {
-    color: hsl(var(--hue1), 90%, 80%);
-    text-decoration: none;
-    transition: all 0.3s var(--ease);
-}
-
-footer a:hover {
-    text-shadow: 0 0 5px hsl(var(--hue1), 90%, 60%), 
-                0 0 10px hsl(var(--hue1), 90%, 50%);
-}
-
-/* Ajustar el ancho de las tarjetas en dispositivos móviles */
-@media (max-width: 768px) {
-    .moto-card {
-        width: 100%; /* En móviles, cada tarjeta ocupa el ancho completo */
-    }
-    
-    .moto-img {
-        height: 160px; /* Altura ligeramente menor en móviles */
-    }
-    
-    .main-container {
-        margin: 20px auto 40px auto; /* Márgenes más pequeños en móvil */
-        padding: 20px;
-    }
-    .grid-container {
-        grid-template-columns: 1fr; /* En dispositivos móviles, mostrar una columna */
-    }
-}
-
-/* Botón para recargar la página de motos populares */
-.reload-btn {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 10px 18px;
-    background: linear-gradient(90deg, hsl(var(--hue1), 90%, 40%), hsl(var(--hue2), 90%, 40%));
-    color: white;
-    text-decoration: none;
     border-radius: var(--radius);
-    font-weight: bold;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    border: var(--border) solid hsl(var(--hue1), 20%, 20%, 0.5);
     transition: all 0.3s var(--ease);
-    text-align: center;
-    box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
-    border: none;
-    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+    transition: transform 0.5s ease, box-shadow 0.5s ease, opacity 0.5s ease;
+    opacity: 0; /* Iniciar con opacidad 0 para animar entrada */
 }
 
-.reload-btn:hover {
-    background: linear-gradient(90deg, hsl(var(--hue1), 90%, 50%), hsl(var(--hue2), 90%, 50%));
-    box-shadow: 0 0 15px rgba(255, 102, 0, 0.6);
+/* Estilos para el score de coincidencia */
+.moto-score {
+    margin: 10px 0;
+    background: hsl(var(--hue1), 15%, 15%, 0.6);
+    border-radius: calc(var(--radius) * 0.5);
+    padding: 10px;
+    position: relative;
+}
+
+.score-label {
+    display: inline-block;
+    margin-right: 5px;
+    font-weight: bold;
+    color: hsl(var(--hue1), 50%, 80%);
+}
+
+.score-value {
+    display: inline-block;
+    font-weight: bold;
+    color: hsl(var(--hue2), 80%, 70%);
+}
+
+.score-bar {
+    height: 4px;
+    background: linear-gradient(90deg, hsl(var(--hue2), 80%, 50%), hsl(var(--hue1), 70%, 60%));
+    border-radius: var(--radius);
+    margin-top: 5px;
+    transition: width 1s var(--ease);
+}
+
+/* Estilos para los botones de acción */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.like-btn, .ideal-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius);
+    background: hsl(var(--hue1), 30%, 30%, 0.6);
+    color: white;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.like-btn:hover, .ideal-btn:hover {
+    background: hsl(var(--hue1), 50%, 40%, 0.8);
     transform: translateY(-2px);
 }
 
-/* Clase para efectos de animación */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.pulse {
-    animation: pulse 1.5s infinite;
-}
-
-/* Estilos para las tarjetas de tendencias */
-.trends-container {
-    margin-bottom: 30px;
-    padding: 15px;
-    background: rgba(20, 20, 20, 0.5);
-    border-radius: var(--radius);
-    box-shadow: 0 0 20px rgba(255, 150, 0, 0.2);
-    text-align: center;
-}
-
-.trends-title {
-    color: white;
-    margin-bottom: 15px;
-    font-size: 1.3em;
-}
-
-.trends-badges {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.trend-badge {
-    padding: 8px 15px;
-    border-radius: 25px;
-    font-weight: bold;
-    font-size: 0.9em;
-    transition: all 0.3s ease;
-}
-
-.trend-badge:hover {
-    transform: translateY(-3px);
-    cursor: pointer;
-}
-
-.trend-badge.up {
-    background: linear-gradient(90deg, hsl(120, 80%, 25%), hsl(120, 80%, 35%));
-    color: white;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-}
-
-.trend-badge.down {
-    background: linear-gradient(90deg, hsl(0, 80%, 30%), hsl(0, 80%, 40%));
-    color: white;
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
-}
-
-.trend-badge.neutral {
-    background: linear-gradient(90deg, hsl(220, 70%, 30%), hsl(220, 70%, 40%));
-    color: white;
-    box-shadow: 0 0 10px rgba(100, 100, 255, 0.2);
-}
-
-/* Test */
-:root {
-  --hue1: 24; /* Naranja principal */
-  --hue2: 16; /* Naranja secundario */
-  --border: 1px;
-  --border-color: hsl(var(--hue1), 12%, 20%);
-  --radius: 15px;
-  --ease: cubic-bezier(0.5, 1, 0.89, 1);
-}
-
-
-
-#contenedorPrincipalTest {
-  position: relative;
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-#physics-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-.test-container {
-  position: relative;
-  z-index: 1;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: var(--radius);
-  padding: 30px;
-  width: 80%;
-  max-width: 800px;
-  text-align: center;
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.5);
-  border: 2px solid hsl(var(--hue1), 70%, 50%, 0.8);
-}
-
-.back-dashboard-btn {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  color: white;
-  background: linear-gradient(90deg, hsl(var(--hue1), 90%, 30%), hsl(var(--hue2), 90%, 25%));
-  padding: 10px 18px;
-  border-radius: calc(var(--radius) * 0.6);
-  font-size: 16px;
-  font-weight: bold;
-  border: var(--border) solid hsl(var(--hue1), 30%, 30%, 0.5);
-  box-shadow: 0 0 10px hsl(var(--hue1), 90%, 40%, 0.5);
-  transition: all 0.3s var(--ease);
-}
-
-.back-dashboard-btn:hover {
-  box-shadow: 0 0 15px hsl(var(--hue1), 90%, 50%), 
-              0 0 30px hsl(var(--hue1), 90%, 40%);
-  transform: scale(1.05);
-}
-
-h1.tituloFriends {
-  text-align: center;
-  font-size: 36px;
-  margin-bottom: 30px;
-  color: white;
-  text-shadow: 0 0 5px hsl(var(--hue1), 90%, 60%), 
-              0 0 15px hsl(var(--hue1), 90%, 60%), 
-              0 0 30px hsl(var(--hue1), 90%, 50%);
-}
-
-.pregunta {
-  display: none;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
-}
-
-.pregunta.active {
-  display: block;
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.pregunta h2 {
-  margin-bottom: 15px;
-  font-size: 1.3rem;
-  text-shadow: 0 0 5px #f97316;
-}
-
-.options-wrapper {
-  position: relative;
-  height: 320px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.circle-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.nav-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 30px;
-  gap: 20px;
-}
-
-.nav-button {
-  flex: 1;
-  background: linear-gradient(90deg, hsl(var(--hue1), 90%, 30%), hsl(var(--hue2), 90%, 30%));
-  color: rgb(255, 255, 255);
-  border: none;
-  padding: 12px 20px;
-  border-radius: calc(var(--radius) * 0.6);
-  cursor: pointer;
-  font-size: 16px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 0 5px hsl(var(--hue1), 90%, 40%, 0.5);
-  transition: all 0.3s var(--ease);
-}
-
-.nav-button:hover {
-  box-shadow: 0 0 10px hsl(var(--hue1), 90%, 50%),
-              0 0 20px hsl(var(--hue1), 90%, 40%, 0.5);
-  transform: scale(1.03);
-}
-
-.nav-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: scale(1);
-  box-shadow: none;
-}
-
-select {
-  width: 100%;
-  max-width: 300px;
-  padding: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: 1px solid #f97316;
-  border-radius: 6px;
-  font-size: 1rem;
-  margin: 0 auto;
-  display: block;
-}
-
-.progress-container {
-  width: 100%;
-  height: 10px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, hsl(var(--hue1), 90%, 50%), hsl(var(--hue2), 90%, 40%));
-  width: 10%;
-  transition: width 0.5s ease-in-out;
-  box-shadow: 0 0 10px hsl(var(--hue1), 90%, 60%, 0.5);
-}
-
-/* Modal de finalización */
-.completion-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  z-index: 100;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: linear-gradient(235deg, hsl(var(--hue1) 30% 15% / 0.9), hsl(var(--hue1) 20% 10% / 0.8) 33%), 
-              linear-gradient(45deg, hsl(var(--hue2) 20% 10% / 0.9), hsl(var(--hue2) 20% 10% / 0.8) 33%);
-  backdrop-filter: blur(12px);
-  border-radius: var(--radius);
-  padding: 40px;
-  max-width: 500px;
-  text-align: center;
-  box-shadow: 0 0 30px rgba(249, 115, 22, 0.6);
-  border: 2px solid hsl(var(--hue1), 70%, 50%, 0.8);
-}
-
-.confetti {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: #f97316;
-  opacity: 0.8;
-  border-radius: 50%;
-  animation: confetti-fall 4s ease-in-out infinite;
-}
-
-@keyframes confetti-fall {
-  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-}
-
-/* Estilo para el efecto de brillo (shine) */
-.shine {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    background: radial-gradient(
-        circle,
-        hsl(var(--hue1), 100%, 70%, 0.8) 0%,
-        hsl(var(--hue1), 100%, 60%, 0.3) 40%,
-        transparent 70%
-    );
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0;
-    filter: blur(8px);
-    transform: translate(-50%, -50%);
-    transition: opacity 0.3s var(--ease);
-    z-index: 1;
-}
-
-/* Clase para efecto de tarjeta cuando se da like */
-.moto-card.liked {
-    box-shadow: 0 0 15px hsl(var(--hue1), 90%, 50%),
-                0 0 30px hsl(var(--hue1), 90%, 40%, 0.7);
-}
-
-/* Estilo para botón de like cuando está activo */
 .like-btn.liked {
-    background-color: #f34c4c; /* Un color más intenso para el botón activo */
-    box-shadow: 0 0 10px #f34c4c, 0 0 20px #f34c4c70;
+    background: hsl(0, 70%, 40%, 0.8);
 }
 
-/* Contador de likes con más destaque visual */
-.like-info {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    color: hsl(var(--hue2), 70%, 80%);
-    transition: all 0.3s var(--ease);
+.ideal-btn {
+    background: hsl(var(--hue2), 50%, 30%, 0.6);
+}
+
+.ideal-btn:hover {
+    background: hsl(var(--hue2), 60%, 40%, 0.8);
 }
 
 .like-count {
-    font-weight: bold;
-    margin-right: 5px;
-    font-size: 16px;
-    color: hsl(var(--hue1), 90%, 80%);
-    text-shadow: 0 0 4px hsl(var(--hue1), 90%, 50%, 0.7);
-}
-
-/* Badge de popular */
-.popular-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: linear-gradient(90deg, hsl(340, 90%, 40%), hsl(370, 90%, 45%));
-    color: white;
-    padding: 5px 10px;
-    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: calc(var(--radius) * 0.5);
     font-size: 0.8em;
-    font-weight: bold;
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
-    z-index: 10;
-    animation: pulse 2s infinite;
-    transform-origin: center;
 }
 
-/* Título con efecto de gradiente y sombra */
-.tituloFriends {
-    font-size: 2.5em;
-    text-align: center;
-    margin-bottom: 1.5em;
+/* Estilos para las notificaciones */
+.notification {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 15px;
+    background: hsl(var(--hue1), 30%, 15%, 0.9);
+    border-left: 4px solid hsl(var(--hue2), 70%, 50%);
+    border-radius: var(--radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left-color: hsl(120, 70%, 40%);
+}
+
+.notification.error {
+    border-left-color: hsl(0, 70%, 50%);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: white;
-    text-shadow: 0 0 10px rgba(255, 150, 0, 0.8);    background: linear-gradient(90deg, hsl(var(--hue1), 90%, 50%), hsl(var(--hue2), 90%, 50%));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    padding: 10px;
-    margin-top: 20px;
-    animation: glow 3s ease-in-out infinite alternate;
 }
 
-@keyframes glow {
-    0% {
-        text-shadow: 0 0 10px rgba(255, 150, 0, 0.8);
-    }
-    100% {
-        text-shadow: 0 0 20px rgba(255, 150, 0, 0.8), 0 0 30px rgba(255, 100, 0, 0.6);
-    }
-}
-
-/* Efecto de brillo para las tarjetas de motos */
-.shine {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 60px;
-    height: 60px;
-    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+/* Botón para volver arriba */
+.back-to-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    background: hsl(var(--hue1), 50%, 40%, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     opacity: 0;
-    pointer-events: none;
-    z-index: 5;
-    filter: blur(4px);
-    transition: opacity 0.2s ease;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 100;
 }
 
-/* Animación al dar like */
-@keyframes likeEffect {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.2); }
-    50% { transform: scale(0.95); }
-    75% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+.back-to-top-btn.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
-.like-btn.liked {
-    animation: likeEffect 0.5s ease-in-out;
+/* Ajustar vista en móviles */
+@media (max-width: 768px) {
+    .grid-container {
+        grid-template-columns: 1fr; /* Una columna en móviles */
+    }
+    
+    .moto-img {
+        height: 160px; /* Imágenes más pequeñas en móviles */
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .notification {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+    }
 }
 
-/* Animación de título por letra */
-.title-letter {
+/* Ajustes específicos para canvas de burbujas */
+.circle-canvas {
+  min-height: 400px !important;
+  height: 50vh !important;
+  width: 100% !important;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  position: relative !important;
+  overflow: hidden;
+  /* Fondo más limpio y elegante */
+  background: linear-gradient(to bottom, rgba(30, 30, 32, 0.95), rgba(24, 24, 26, 0.95));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  pointer-events: auto !important; /* CRUCIAL: Permitir eventos */
+  touch-action: none; /* CRUCIAL: Para eventos táctiles */
+}
+
+/* IMPORTANTE: Asegurar que el canvas reciba eventos de clic */
+.circle-canvas canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  pointer-events: auto !important; /* CRUCIAL: Permite interacción */
+  touch-action: none !important;
+  z-index: 10 !important;
+  transition: opacity 0.3s ease;
+}
+
+/* Asegurar que cualquier elemento dentro del canvas no bloquee eventos */
+.circle-canvas * {
+  pointer-events: auto !important;
+}
+
+/* Nuevos estilos para las especificaciones de moto */
+.moto-specs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5px 0 15px 0;
+  color: hsl(var(--hue1), 80%, 70%);
+  font-weight: 500;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 5px 10px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.specs-year, .specs-power {
+  display: inline-block;
+}
+
+.specs-divider {
+  margin: 0 6px;
+  opacity: 0.7;
+}
+
+/* Mejorar distribución de elementos en tarjeta */
+.moto-card h3 {
+  margin-bottom: 5px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moto-details {
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  text-align: center;
+}
+
+.moto-details p {
+  margin: 3px 0;
+  font-size: 0.9rem;
+}
+/* Estilos para indicadores de recomendación */
+.recommendation-type {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 12px;
     display: inline-block;
-    animation: letterWave 3s ease-in-out infinite;
-    animation-fill-mode: both;
+    margin-bottom: 10px;
 }
 
-/* Animar cada letra con un retraso diferente */
-.title-letter:nth-child(1) { animation-delay: 0.0s; }
-.title-letter:nth-child(2) { animation-delay: 0.1s; }
-.title-letter:nth-child(3) { animation-delay: 0.2s; }
-.title-letter:nth-child(4) { animation-delay: 0.3s; }
-.title-letter:nth-child(5) { animation-delay: 0.4s; }
-.title-letter:nth-child(6) { animation-delay: 0.5s; }
-.title-letter:nth-child(7) { animation-delay: 0.6s; }
-.title-letter:nth-child(8) { animation-delay: 0.7s; }
-.title-letter:nth-child(9) { animation-delay: 0.8s; }
-.title-letter:nth-child(10) { animation-delay: 0.9s; }
-.title-letter:nth-child(11) { animation-delay: 1.0s; }
-.title-letter:nth-child(12) { animation-delay: 1.1s; }
-.title-letter:nth-child(13) { animation-delay: 1.2s; }
-.title-letter:nth-child(14) { animation-delay: 1.3s; }
-.title-letter:nth-child(15) { animation-delay: 1.4s; }
-
-@keyframes letterWave {
-    0%, 100% { 
-        transform: translateY(0); 
-        text-shadow: 0 0 10px rgba(255, 150, 0, 0.8); 
-    }
-    50% { 
-        transform: translateY(-5px); 
-        text-shadow: 0 0 20px rgba(255, 150, 0, 1); 
-    }
+.recommendation-type.social {
+    background-color: #e3f2fd;
+    color: #1976d2;
 }
 
-/* Animación de título por letra */
-.title-letter {
-    display: inline-block;
-    animation: letterWave 3s ease-in-out infinite;
-    animation-fill-mode: both;
+.recommendation-type.catalog {
+    background-color: #fff8e1;
+    color: #ff8f00;
 }
 
-/* Animar cada letra con un retraso diferente */
-.title-letter:nth-child(1) { animation-delay: 0.0s; }
-.title-letter:nth-child(2) { animation-delay: 0.1s; }
-.title-letter:nth-child(3) { animation-delay: 0.2s; }
-.title-letter:nth-child(4) { animation-delay: 0.3s; }
-.title-letter:nth-child(5) { animation-delay: 0.4s; }
-.title-letter:nth-child(6) { animation-delay: 0.5s; }
-.title-letter:nth-child(7) { animation-delay: 0.6s; }
-.title-letter:nth-child(8) { animation-delay: 0.7s; }
-.title-letter:nth-child(9) { animation-delay: 0.8s; }
-.title-letter:nth-child(10) { animation-delay: 0.9s; }
-.title-letter:nth-child(11) { animation-delay: 1.0s; }
-.title-letter:nth-child(12) { animation-delay: 1.1s; }
-.title-letter:nth-child(13) { animation-delay: 1.2s; }
-.title-letter:nth-child(14) { animation-delay: 1.3s; }
-.title-letter:nth-child(15) { animation-delay: 1.4s; }
+/* Estilos para botones de recomendaciones */
+.moto-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
 
-@keyframes letterWave {
-    0%, 100% { 
-        transform: translateY(0); 
-        text-shadow: 0 0 10px rgba(255, 150, 0, 0.8); 
-    }
-    50% { 
-        transform: translateY(-5px); 
-        text-shadow: 0 0 20px rgba(255, 150, 0, 1); 
-    }
+.moto-actions button {
+    flex: 1 0 auto;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 120px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-moto-ideal {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #333;
+    border: 2px solid #ffd700;
+}
+
+.btn-moto-ideal:hover {
+    background: linear-gradient(135deg, #ffed4e, #fff176);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.btn-moto-ideal.btn-ideal-selected {
+    background: linear-gradient(135deg, #ff9800, #ffc107);
+    color: white;
+    border-color: #ff9800;
+}
+
+.btn-like {
+    background: linear-gradient(135deg, #e91e63, #f06292);
+    color: white;
+    border: 2px solid #e91e63;
+}
+
+.btn-like:hover {
+    background: linear-gradient(135deg, #f06292, #f48fb1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
+}
+
+.btn-like.btn-like-selected {
+    background: linear-gradient(135deg, #c2185b, #e91e63);
+    border-color: #c2185b;
+}
+
+.btn-detalles {
+    background: linear-gradient(135deg, #2196f3, #64b5f6);
+    color: white;
+    border: 2px solid #2196f3;
+}
+
+.btn-detalles:hover {
+    background: linear-gradient(135deg, #64b5f6, #90caf9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+/* Estilos para las tarjetas de motos */
+.moto-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.moto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.moto-image-container {
+    text-align: center;
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.moto-img {
+    max-width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.moto-info {
+    color: white;
+}
+
+.moto-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #ffd700;
+    text-align: center;
+}
+
+.moto-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.moto-specs p {
+    margin: 0;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.match-score {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+.score-label {
+    font-weight: 600;
+    color: #ffd700;
+}
+
+.score-bar {
+    background: rgba(255, 255, 255, 0.2);
+    height: 8px;
+    border-radius: 4px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.score-fill {
+    background: linear-gradient(90deg, #ffd700, #ff9800);
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+
+.score-percentage {
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.reasons-container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.reasons-container h4 {
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.reasons-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reasons-list li {
+    margin: 8px 0;
+    padding: 5px 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.reasons-list i {
+    color: #4caf50;
+    margin-right: 8px;
 }
