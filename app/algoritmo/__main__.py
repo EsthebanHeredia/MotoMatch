@@ -4,7 +4,7 @@ Punto de entrada principal para ejecutar los algoritmos de recomendación.
 from .pagerank import MotoPageRank
 from .label_propagation import MotoLabelPropagation
 from .moto_ideal import MotoIdealRecommender
-from .advanced_hybrid import AdvancedHybridRecommender, get_best_recommendations
+
 from .utils import DatabaseConnector, DataPreprocessor
 
 def run_pagerank(db_config):
@@ -125,74 +125,7 @@ def run_moto_ideal(db_config, user_id):
     finally:
         connector.close()
         
-def run_advanced_hybrid(db_config, user_id, context=None):
-    """
-    Ejecuta el algoritmo híbrido avanzado para recomendaciones precisas.
-    
-    Args:
-        db_config (dict): Configuración de la base de datos
-        user_id: ID del usuario para el que se generan recomendaciones
-        context (dict, optional): Datos contextuales (hora, ubicación, etc.)
-        
-    Returns:
-        list: Lista de motos recomendadas con puntuaciones y razones
-    """
-    # Conectar a la base de datos
-    connector = DatabaseConnector(
-        uri=db_config.get('uri', 'bolt://localhost:7687'),
-        user=db_config.get('user', 'neo4j'),
-        password=db_config.get('password', 'password')
-    )
-    
-    try:
-        # Obtener datos necesarios
-        user_df = connector.get_user_data()
-        moto_df = connector.get_moto_data()
-        ratings_df = connector.get_ratings_data()
-        interaction_df = connector.get_interaction_data()
-        
-        # Configuración del recomendador avanzado
-        config = {
-            'learning_rate': 0.001,
-            'regularization': 0.02,
-            'embedding_size': 32,
-            'hidden_layers': [64, 32],
-            'epochs': 15,
-            'batch_size': 32,
-            'collaborative_weight': 0.35,
-            'feature_weight': 0.45,
-            'contextual_weight': 0.2,
-            'model_path': 'models/'
-        }
-        
-        # Inicializar el recomendador avanzado
-        recommender = AdvancedHybridRecommender(config)
-        
-        # Cargar datos
-        recommender.load_data(
-            user_features=user_df,
-            moto_features=moto_df,
-            user_interactions=interaction_df,
-            user_context=None  # Los datos contextuales se pasan en context
-        )
-        
-        # Entrenar modelos
-        recommender.train_models()
-        
-        # Obtener recomendaciones avanzadas
-        recommendations = recommender.get_recommendations(
-            user_id=user_id,
-            context=context,
-            top_n=5,
-            diversity_factor=0.3
-        )
-        
-        return recommendations
-    except Exception as e:
-        print(f"Error al ejecutar el recomendador avanzado: {str(e)}")
-        return []
-    finally:
-        connector.close()
+
 
 def run_moto_ideal_with_ranges(db_config, user_id, user_preferences=None):
     """
@@ -393,8 +326,4 @@ if __name__ == "__main__":
         print(f"  - Moto {moto_id}: {score:.4f}")
         print(f"    Razones: {', '.join(reasons)}")
         
-    print("\nRecomendaciones con algoritmo híbrido avanzado:")
-    advanced_recs = run_advanced_hybrid(db_config, user_id)
-    for moto_id, score, reasons in advanced_recs:
-        print(f"  - Moto {moto_id}: {score:.4f}")
-        print(f"    Razones: {', '.join(reasons)}")
+    
